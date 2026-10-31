@@ -8,9 +8,6 @@ import lk.ac.ruh.eng.campusevents.domain.User;
 import lk.ac.ruh.eng.campusevents.error.ApiException;
 import lk.ac.ruh.eng.campusevents.repository.UserRepository;
 import org.bson.types.ObjectId;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,20 +17,19 @@ public class AuthService {
     private final UserRepository users;
     private final PasswordEncoder passwords;
     private final JwtService jwt;
-    private final MongoTemplate mongo;
+    private final UserIndexes indexes;
     private final String dummyHash;
-    private boolean indexesReady;
 
-    public AuthService(UserRepository users, PasswordEncoder passwords, JwtService jwt, MongoTemplate mongo) {
+    public AuthService(UserRepository users, PasswordEncoder passwords, JwtService jwt, UserIndexes indexes) {
         this.users = users;
         this.passwords = passwords;
         this.jwt = jwt;
-        this.mongo = mongo;
+        this.indexes = indexes;
         this.dummyHash = passwords.encode(UUID.randomUUID().toString());
     }
 
     public AuthResponse register(RegisterRequest request) {
-        ensureUniqueIndexes();
+        indexes.ensure();
         if (users.findByEmail(request.email()).isPresent() || users.findByRegistrationNumber(request.registrationNumber()).isPresent()) {
             throw new ApiException(HttpStatus.CONFLICT, "DUPLICATE_USER", "Email or registration number is already registered.");
         }
@@ -46,27 +42,18 @@ public class AuthService {
         return jwt.issue(users.save(user));
     }
 
-    // Lazy initialization preserves MongoDB-independent liveness startup while enforcing uniqueness in every profile.
-    private synchronized void ensureUniqueIndexes() {
-        if (!indexesReady) {
-            mongo.indexOps(User.class).ensureIndex(new Index().on("email", Direction.ASC).unique());
-            mongo.indexOps(User.class).ensureIndex(new Index().on("registrationNumber", Direction.ASC).unique());
-            indexesReady = true;
-        }
-    }
-
     public AuthResponse login(LoginRequest request) {
         User user = users.findByEmail(request.email()).orElse(null);
         String hash = user == null || user.getPasswordHash() == null ? dummyHash : user.getPasswordHash();
         boolean valid = request.password().getBytes(StandardCharsets.UTF_8).length <= 72 && passwords.matches(request.password(), hash);
-        if (!valid || user == null || user.getRole() != Role.STUDENT) throw invalidCredentials();
+        if (!valid || user == null || user.getRole() == null) throw invalidCredentials();
         return jwt.issue(user);
     }
 
     public UserResponse currentUser(String subject) {
         if (subject == null || !ObjectId.isValid(subject)) throw invalidCredentials();
         User user = users.findById(new ObjectId(subject)).orElseThrow(AuthService::invalidCredentials);
-        if (user.getRole() != Role.STUDENT) throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "Student access is required.");
+        if (user.getRole() == null) throw invalidCredentials();
         return UserResponse.from(user);
     }
 

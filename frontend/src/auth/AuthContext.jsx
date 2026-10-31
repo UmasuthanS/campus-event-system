@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { apiRequest } from './api';
+import { rolePages } from './roles';
 
 const AuthContext = createContext(null);
 
@@ -15,10 +16,11 @@ export function AuthProvider({ children }) {
 
   async function authenticate(mode, fields) {
     const result = await apiRequest(`/auth/${mode}`, { method: 'POST', body: JSON.stringify(fields) });
-    if (result.user?.role !== 'STUDENT' || !result.accessToken || !Number.isFinite(Date.parse(result.expiresAt))) {
-      throw new Error('A valid student session is required.');
+    if (!Object.hasOwn(rolePages, result.user?.role) || !result.accessToken || !Number.isFinite(Date.parse(result.expiresAt))) {
+      throw new Error('A valid account session is required.');
     }
     setSession(result);
+    return result.user;
   }
 
   const request = useCallback(async (path, options = {}) => {

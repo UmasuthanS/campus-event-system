@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import { dashboardPath, rolePages } from '../auth/roles';
 
 const links = [['/', 'Home'], ['/events', 'Events'], ['/calendar', 'Calendar'], ['/clubs', 'Clubs'], ['/login', 'Login'], ['/register', 'Register']];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const visibleLinks = user ? [...links.slice(0, 4), ['/student/dashboard', 'My account']] : links;
+  const visibleLinks = user ? [...links.slice(0, 4), [dashboardPath(user.role), rolePages[user.role]?.navLabel || 'Dashboard']] : links;
   const [open, setOpen] = useState(false);
   return (
     <header>

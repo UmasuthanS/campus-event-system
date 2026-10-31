@@ -94,7 +94,7 @@ class AuthIntegrationTest {
         assertThat(wrong.getBody().path("status").asInt()).isEqualTo(401);
     }
     @Test
-    void expiredTokensAndAdminAccountsAreRejected() {
+    void expiredTokensAndStaleRoleClaimsAreRejected() {
         var response = post("register", registration("108"));
         String accessToken = response.getBody().path("accessToken").asText();
         var user = users.findByEmail("student108@example.test").orElseThrow();
@@ -105,7 +105,7 @@ class AuthIntegrationTest {
         assertThat(me(expired).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         user.setRole(Role.CLUB_ADMIN);
         users.save(user);
-        assertThat(post("login", Map.of("email", user.getEmail(), "password", PASSWORD)).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(post("login", Map.of("email", user.getEmail(), "password", PASSWORD)).getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(me(accessToken).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
     private Map<String, Object> registration(String suffix) {

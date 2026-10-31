@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import { dashboardPath } from '../auth/roles';
 
 export default function AccountPage({ register = false }) {
   const { user, authenticate } = useAuth();
@@ -8,7 +9,7 @@ export default function AccountPage({ register = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fields, setFields] = useState({});
-  if (user) return <Navigate to="/student/dashboard" replace />;
+  if (user) return <Navigate to={dashboardPath(user.role)} replace />;
 
   async function submit(event) {
     event.preventDefault();
@@ -17,8 +18,8 @@ export default function AccountPage({ register = false }) {
     setError('');
     setFields({});
     try {
-      await authenticate(register ? 'register' : 'login', Object.fromEntries(new FormData(event.currentTarget)));
-      navigate('/student/dashboard', { replace: true });
+      const account = await authenticate(register ? 'register' : 'login', Object.fromEntries(new FormData(event.currentTarget)));
+      navigate(dashboardPath(account.role), { replace: true });
     } catch (failure) {
       setError(failure.message);
       setFields(failure.fields || {});
@@ -37,7 +38,7 @@ export default function AccountPage({ register = false }) {
         <img src="/assets/university-logo.png" width="48" height="68" alt="University of Ruhuna crest" />
         <p className="eyebrow">Your campus community</p>
         <h1>{register ? 'Your next chapter starts here.' : 'Welcome back to campus.'}</h1>
-        <p className="intro">{register ? 'Create your student account to join the campus community.' : 'Sign in with your student email and password.'}</p>
+        <p className="intro">{register ? 'Create your student account to join the campus community.' : 'Sign in with your email and password.'}</p>
         <form onSubmit={submit} aria-busy={loading}>
           {error && <div className="form-error" role="alert">{error}</div>}
           {register && field('fullName', 'Full name', 'text', { autoComplete: 'name', minLength: 2, maxLength: 100 })}

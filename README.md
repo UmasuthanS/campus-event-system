@@ -1,6 +1,6 @@
 # Campus Event Discovery & RSVP System
 
-Project setup, branded frontend, MongoDB domain models, and student authentication for the University of Ruhuna, Faculty of Engineering.
+Project setup, branded frontend, MongoDB domain models, and role-based authentication for the University of Ruhuna, Faculty of Engineering.
 
 - `frontend/`: React, Vite, JavaScript, Tailwind CSS
 - `backend/`: Java 21, Spring Boot, Maven, Web, Security, Validation, Data MongoDB
@@ -50,8 +50,9 @@ Health reports application liveness and does not query MongoDB. MongoDB is
 optional for default-profile startup, liveness verification, and the default tests. The Mongo driver
 may log background connection failures when no database is running.
 Health endpoints and the registration/login POST endpoints are public.
-`GET /api/v1/users/me` requires a valid student Bearer token. Other backend
-requests remain denied; event APIs and full dashboards are reserved for later stages.
+`GET /api/v1/users/me` requires a valid Bearer token. Public discovery GET endpoints
+return clubs and published events. Management CRUD and full dashboards are reserved
+for later stages.
 
 ## Local MongoDB setup
 
@@ -128,9 +129,9 @@ with millisecond precision. Event and review timestamps also use `Instant`.
 | `organizer_applications` | OrganizerApplication; user/club and club/status lookups; PENDING, APPROVED, REJECTED |
 
 A cancelled RSVP retains its event/user pair; future RSVP operations should update
-the existing record. `passwordHash` is excluded from JSON serialization. Event APIs are not implemented.
+the existing record. `passwordHash` is excluded from JSON serialization. Event management APIs are not implemented.
 
-## Student authentication
+## Authentication
 
 Set `JWT_SECRET` to at least 32 cryptographically random bytes encoded as Base64
 (`openssl rand -base64 32`). Empty, malformed, or weak keys stop startup. Keep the
@@ -140,9 +141,9 @@ Tests generate their own ephemeral signing key and do not need `JWT_SECRET`.
 
 | Endpoint | Result |
 | --- | --- |
-| `POST /api/v1/auth/register` | 201 with access token and public student profile |
-| `POST /api/v1/auth/login` | 200 with access token and public student profile |
-| `GET /api/v1/users/me` | 200 with current student profile; Bearer token required |
+| `POST /api/v1/auth/register` | 201 with access token and public account profile |
+| `POST /api/v1/auth/login` | 200 with access token and public account profile |
+| `GET /api/v1/users/me` | 200 with current account profile; Bearer token required |
 
 Registration JSON fields are `fullName`, `registrationNumber`, `email`, and
 `password`. Login uses `email` and `password`. Registration numbers accept
@@ -154,22 +155,71 @@ User unique indexes are ensured lazily on registration, including outside `dev`,
 so concurrent duplicates are rejected without requiring MongoDB during startup.
 
 Registration always assigns STUDENT; unsupported fields such as `role` are rejected.
-Club Admin and Super Admin login are unavailable at this stage. JWT validation
+Existing STUDENT, CLUB_ADMIN, and SUPER_ADMIN accounts use the same login endpoint. JWT validation
 checks HS256 signatures, issuer, audience, and expiry. `/users/me` also checks the
-current database record and role.
+current database record and role. Every authenticated request compares its role claim
+with the stored role; stale privileges are denied immediately.
 
 Errors use `{status, code, message, errors}`. Statuses include 400 for invalid input,
 401 for invalid credentials/tokens, 403 for forbidden access, 409 for duplicates,
 and 503 for database unavailability. Credentials and connection details are omitted.
 
-Use the existing frontend Register/Login pages. Successful authentication opens
-`/student/dashboard`, a minimal protected account page. JWTs remain in React memory;
+Use the existing frontend Register/Login pages. Successful authentication opens the matching
+`/student/dashboard`, `/club-admin/dashboard`, or `/super-admin/dashboard` placeholder.
+Role-mismatched routes show `/unauthorized` (403). JWTs remain in React memory;
 no credentials are saved in browser storage or cookies. Reloading requires login.
 Expiry and HTTP 401 clear the session. Logout clears browser memory; issued JWTs
 expire naturally within their short lifetime. No refresh tokens are implemented.
 Vite's existing `/api` proxy keeps frontend requests on the same origin. API security
 is stateless and uses explicit Authorization headers; CSRF is disabled because
 no authentication cookies are used. Use HTTPS for any non-local deployment.
+
+## Role-based access
+
+| API | Access |
+| --- | --- |
+| `GET /api/v1/events`, `GET /api/v1/clubs` | Public, read-only discovery; events include PUBLISHED records only |
+| `GET /api/v1/users/me` | Any of the three roles |
+| `/api/v1/student/**` | STUDENT only |
+| `/api/v1/club-admin/**` | CLUB_ADMIN or SUPER_ADMIN |
+| `/api/v1/super-admin/**` | SUPER_ADMIN only |
+
+Each protected area exposes only `GET .../access` for verifying permissions at this
+stage. `GET /api/v1/club-admin/clubs/{clubId}/access` additionally checks ownership.
+Club Admins must appear in that club's `adminIds` (BSON ObjectIds); Super Admins
+can access any existing club. Upcoming club management methods must reuse
+`@PreAuthorize("@clubAuthorization.canManage(authentication, #clubId)")` in addition
+to the protected URL rules. There are no public role changes, admin registration,
+club ownership changes, or management CRUD endpoints. Unauthenticated protected
+requests return 401; insufficient permissions return 403. Database failures fail
+closed with 503. Deleting an account invalidates its tokens.
+
+Frontend event/club pages retain their clearly labeled demo listings; connecting
+them to discovery data is outside this stage.
+
+### Development-only Super Admin bootstrap
+
+Use the ignored backend `.env` with `SPRING_PROFILES_ACTIVE=dev`. Set all of:
+
+```dotenv
+BOOTSTRAP_SUPER_ADMIN=true
+BOOTSTRAP_SUPER_ADMIN_NAME=
+BOOTSTRAP_SUPER_ADMIN_REGISTRATION_NUMBER=
+BOOTSTRAP_SUPER_ADMIN_EMAIL=
+BOOTSTRAP_SUPER_ADMIN_PASSWORD=
+```
+
+Fill the blank values locally using the same registration/password validation
+rules documented above, export the `.env`, then start the backend. Missing or
+invalid values stop startup without exposing credentials. The bootstrap creates
+only a SUPER_ADMIN with a BCrypt hash. Existing matching Super Admins are left
+unchanged; conflicting student/admin identities stop startup and are never
+promoted or overwritten. It is safe to rerun with the same identity.
+
+After the first successful startup, set `BOOTSTRAP_SUPER_ADMIN=false` and remove
+the bootstrap credentials from the environment. The process is disabled by default
+and unavailable outside `dev`, even when its flag is enabled. Club Admin assignment
+and club ownership provisioning belong to the later approval/management stages.
 
 ## Verify builds
 
@@ -191,9 +241,9 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 ```
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
-`campus_auth_test_*` databases.
+`campus_auth_test_*` and `campus_rbac_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
-role restrictions, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
+role/ownership restrictions, bootstrap safeguards, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
 written to `frontend/dist/` and `backend/target/` (ignored by Git).
