@@ -1,6 +1,6 @@
 # Campus Event Discovery & RSVP System
 
-Project setup, branded frontend, and MongoDB domain models for the University of Ruhuna, Faculty of Engineering.
+Project setup, branded frontend, MongoDB domain models, and student authentication for the University of Ruhuna, Faculty of Engineering.
 
 - `frontend/`: React, Vite, JavaScript, Tailwind CSS
 - `backend/`: Java 21, Spring Boot, Maven, Web, Security, Validation, Data MongoDB
@@ -24,6 +24,8 @@ From the repository root, start the backend:
 
 ```sh
 cd backend
+# Generate a local signing key once per shell; use your saved .env key for repeat starts.
+export JWT_SECRET="$(openssl rand -base64 32)"
 ./mvnw spring-boot:run
 ```
 
@@ -47,8 +49,9 @@ curl --fail http://127.0.0.1:8080/api/v1/health
 Health reports application liveness and does not query MongoDB. MongoDB is
 optional for default-profile startup, liveness verification, and the default tests. The Mongo driver
 may log background connection failures when no database is running.
-Only `GET /api/v1/health` and `GET /api/v1/health/database` are public; other backend requests are denied.
-Authentication, events, and dashboards are reserved for later stages.
+Health endpoints and the registration/login POST endpoints are public.
+`GET /api/v1/users/me` requires a valid student Bearer token. Other backend
+requests remain denied; event APIs and full dashboards are reserved for later stages.
 
 ## Local MongoDB setup
 
@@ -69,7 +72,8 @@ From the repository root:
 ```sh
 cd backend
 cp .env.example .env
-# Edit .env for your database, then export its values:
+# Edit .env for your database and set JWT_SECRET using openssl rand -base64 32.
+# Then export its values:
 set -a
 . ./.env
 set +a
@@ -124,8 +128,48 @@ with millisecond precision. Event and review timestamps also use `Instant`.
 | `organizer_applications` | OrganizerApplication; user/club and club/status lookups; PENDING, APPROVED, REJECTED |
 
 A cancelled RSVP retains its event/user pair; future RSVP operations should update
-the existing record. `passwordHash` is excluded from JSON serialization. Authentication,
-registration flows, and event APIs are not implemented in this stage.
+the existing record. `passwordHash` is excluded from JSON serialization. Event APIs are not implemented.
+
+## Student authentication
+
+Set `JWT_SECRET` to at least 32 cryptographically random bytes encoded as Base64
+(`openssl rand -base64 32`). Empty, malformed, or weak keys stop startup. Keep the
+key in the ignored backend `.env` or your shell. `JWT_TTL_SECONDS` defaults to 900
+and accepts 60–900 seconds; `JWT_ISSUER` defaults to `campus-event-system`.
+Tests generate their own ephemeral signing key and do not need `JWT_SECRET`.
+
+| Endpoint | Result |
+| --- | --- |
+| `POST /api/v1/auth/register` | 201 with access token and public student profile |
+| `POST /api/v1/auth/login` | 200 with access token and public student profile |
+| `GET /api/v1/users/me` | 200 with current student profile; Bearer token required |
+
+Registration JSON fields are `fullName`, `registrationNumber`, `email`, and
+`password`. Login uses `email` and `password`. Registration numbers accept
+`EG/YYYY/NNN` or `EG/YYYY/NNNN` (case-insensitive input). Names require 2–100
+characters. Passwords require 12–72 characters, a letter, a number, and at most
+72 UTF-8 bytes (BCrypt's limit). Passwords are never trimmed; only BCrypt hashes
+are stored. Email and registration number are normalized before duplicate checks.
+User unique indexes are ensured lazily on registration, including outside `dev`,
+so concurrent duplicates are rejected without requiring MongoDB during startup.
+
+Registration always assigns STUDENT; unsupported fields such as `role` are rejected.
+Club Admin and Super Admin login are unavailable at this stage. JWT validation
+checks HS256 signatures, issuer, audience, and expiry. `/users/me` also checks the
+current database record and role.
+
+Errors use `{status, code, message, errors}`. Statuses include 400 for invalid input,
+401 for invalid credentials/tokens, 403 for forbidden access, 409 for duplicates,
+and 503 for database unavailability. Credentials and connection details are omitted.
+
+Use the existing frontend Register/Login pages. Successful authentication opens
+`/student/dashboard`, a minimal protected account page. JWTs remain in React memory;
+no credentials are saved in browser storage or cookies. Reloading requires login.
+Expiry and HTTP 401 clear the session. Logout clears browser memory; issued JWTs
+expire naturally within their short lifetime. No refresh tokens are implemented.
+Vite's existing `/api` proxy keeps frontend requests on the same origin. API security
+is stateless and uses explicit Authorization headers; CSRF is disabled because
+no authentication cookies are used. Use HTTPS for any non-local deployment.
 
 ## Verify builds
 
@@ -146,8 +190,10 @@ cd backend
 MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&connectTimeoutMS=2000' ./mvnw clean verify
 ```
 
-Live tests create and drop their own uniquely named `campus_stage3_test_*` database.
+Live tests create and drop their own uniquely named `campus_stage3_test_*` and
+`campus_auth_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
-duplicate rejection, and idempotent club seeding. Build output is
+duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
+role restrictions, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
 written to `frontend/dist/` and `backend/target/` (ignored by Git).

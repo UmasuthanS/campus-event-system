@@ -35,6 +35,6 @@ class HealthEndpointTest {
     @Test
     void otherRoutesRemainDenied() {
         var response = client.getForEntity("/api/v1/events", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 }

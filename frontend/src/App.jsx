@@ -7,12 +7,15 @@ import Events from './pages/Events';
 import Calendar from './pages/Calendar';
 import Clubs from './pages/Clubs';
 import AccountPage from './pages/AccountPage';
+import StudentDashboard from './pages/StudentDashboard';
+import { AuthProvider } from './auth/AuthContext';
+import StudentRoute from './auth/StudentRoute';
 
 function Layout() {
   const { pathname, hash } = useLocation();
   const main = useRef(null);
   useEffect(() => {
-    const titles = { '/': 'Home', '/events': 'Events', '/calendar': 'Calendar', '/clubs': 'Clubs', '/login': 'Login', '/register': 'Register' };
+    const titles = { '/': 'Home', '/events': 'Events', '/calendar': 'Calendar', '/clubs': 'Clubs', '/login': 'Login', '/register': 'Register', '/student/dashboard': 'Student account' };
     document.title = `${titles[pathname] || 'Page not found'} | Ruhuna Campus Connect`;
     if (hash && document.getElementById(hash.slice(1))) {
       document.getElementById(hash.slice(1)).scrollIntoView();
@@ -21,9 +24,9 @@ function Layout() {
       main.current?.focus({ preventScroll: true });
     }
   }, [pathname, hash]);
-  return <><a className="skip-link" href="#main-content">Skip to content</a><Navbar /><main id="main-content" ref={main} tabIndex={-1}><Routes><Route path="/" element={<Home />} /><Route path="/events" element={<Events />} /><Route path="/calendar" element={<Calendar />} /><Route path="/clubs" element={<Clubs />} /><Route path="/login" element={<AccountPage />} /><Route path="/register" element={<AccountPage register />} /><Route path="*" element={<section className="container page-section"><p className="eyebrow">404</p><h1>That page is off campus.</h1><p className="intro">Let’s get you back to exploring.</p><Link className="button button-primary" to="/">Back to home ↗</Link></section>} /></Routes></main><Footer /></>;
+  return <><a className="skip-link" href="#main-content">Skip to content</a><Navbar /><main id="main-content" ref={main} tabIndex={-1}><Routes><Route path="/" element={<Home />} /><Route path="/events" element={<Events />} /><Route path="/calendar" element={<Calendar />} /><Route path="/clubs" element={<Clubs />} /><Route path="/login" element={<AccountPage key="login" />} /><Route path="/register" element={<AccountPage key="register" register />} /><Route path="/student/dashboard" element={<StudentRoute><StudentDashboard /></StudentRoute>} /><Route path="*" element={<section className="container page-section"><p className="eyebrow">404</p><h1>That page is off campus.</h1><p className="intro">Let’s get you back to exploring.</p><Link className="button button-primary" to="/">Back to home ↗</Link></section>} /></Routes></main><Footer /></>;
 }
 
 export default function App() {
-  return <BrowserRouter><Layout /></BrowserRouter>;
+  return <BrowserRouter><AuthProvider><Layout /></AuthProvider></BrowserRouter>;
 }
