@@ -4,7 +4,7 @@
 node_modules/
 dist/
 target/
-**/ .DS_Store
+.DS_Store
 .idea/
 .vscode/
 *.log
