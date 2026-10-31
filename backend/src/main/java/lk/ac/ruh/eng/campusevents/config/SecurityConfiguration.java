@@ -10,9 +10,9 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Stage 1 exposes only health; authentication will be added in a later stage.
+        // Only liveness and database connectivity are public at this stage.
         return http.authorizeHttpRequests(requests -> requests
-                .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/health", "/api/v1/health/database").permitAll()
                 .anyRequest().denyAll())
                 .build();
     }
