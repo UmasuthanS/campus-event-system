@@ -8,12 +8,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("events")
 @CompoundIndex(name = "event_club_start", def = "{'clubId': 1, 'startsAt': 1}")
+@CompoundIndex(name = "event_status_start", def = "{'status': 1, 'startsAt': 1}")
+@CompoundIndex(name = "event_club_status_start", def = "{'clubId': 1, 'status': 1, 'startsAt': 1}")
 public class Event extends AuditedDocument {
     private ObjectId clubId;
     private ObjectId createdBy;
     private String title;
     private String description;
     private String venue;
+    private String category;
+    private Instant registrationDeadline;
+    private long revision;
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public Instant getRegistrationDeadline() { return registrationDeadline; }
+    public void setRegistrationDeadline(Instant registrationDeadline) { this.registrationDeadline = registrationDeadline; }
+    public long getRevision() { return revision; }
+    public void setRevision(long revision) { this.revision = revision; }
     @Indexed
     private Instant startsAt;
     private Instant endsAt;

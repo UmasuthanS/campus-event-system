@@ -253,3 +253,11 @@ fieldset:disabled { opacity: .7; }
 .club-card h3 { overflow-wrap: anywhere; }
 @media (max-width: 800px) { .club-editor-grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .management-row { align-items: start; flex-direction: column; padding-inline: 0; } }
+
+/* Event management */
+.event-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.event-editor { max-width: 760px; }
+.event-editor select { width: 100%; padding: 12px; border: 1px solid #cdbfba; background: white; border-radius: 3px; font: inherit; }
+.event-toolbar { margin-top: 30px; }
+.event-management-row > * { min-width: 0; }
+.event-management-row .button { padding: 10px 16px; }

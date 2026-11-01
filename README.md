@@ -60,8 +60,8 @@ optional for default-profile startup, liveness verification, and the default tes
 may log background connection failures when no database is running.
 Health endpoints and the registration/login POST endpoints are public.
 `GET /api/v1/users/me` requires a valid Bearer token. Public discovery GET endpoints
-return clubs and published events. Club management is available to authorized admins; event management and full
-dashboards are reserved for later stages.
+return clubs and published events. Club management is available to authorized admins; event creation and management are available to authorized admins. Full dashboards
+remain placeholders.
 
 ## Local MongoDB setup
 
@@ -138,7 +138,7 @@ with millisecond precision. Event and review timestamps also use `Instant`.
 | `organizer_applications` | OrganizerApplication; user/club and club/status lookups; PENDING, APPROVED, REJECTED |
 
 A cancelled RSVP retains its event/user pair; future RSVP operations should update
-the existing record. `passwordHash` is excluded from JSON serialization. Event management APIs are not implemented.
+the existing record. `passwordHash` is excluded from JSON serialization. Event management APIs are documented below.
 
 ## Authentication
 
@@ -205,8 +205,8 @@ are restricted to Super Admins. Unauthenticated protected
 requests return 401; insufficient permissions return 403. Database failures fail
 closed with 503. Deleting an account invalidates its tokens.
 
-The club listing and profiles use real API data. Event pages and the homepage
-club previews retain their labeled demo data.
+The club listing and profiles use real API data. Public event pages and homepage club previews retain their labeled demo data.
+Admin event management uses real API data.
 
 ### Development-only Super Admin bootstrap
 
@@ -243,8 +243,7 @@ before enabling unique indexes; no records are automatically removed.
 Visit `/clubs` for active clubs and `/clubs/:id` for public profiles. Admins can use
 “Manage clubs” at `/manage/clubs`; Super Admins can create clubs, change status,
 and assign/revoke admins by existing account email. Club Admins see only their
-assigned clubs and may edit active profiles. No event management or new dashboards
-are included.
+assigned clubs and may edit active profiles. No new dashboards are included. Event management is linked from this page.
 
 | Endpoint | Permission |
 | --- | --- |
@@ -272,6 +271,45 @@ other assignments and the account's CLUB_ADMIN role; no automatic global role
 changes occur on revocation. Inactive clubs remain in MongoDB and their public
 profiles return 404 until reactivated.
 
+## Event creation and management
+
+Use “Manage events” from `/manage/clubs`, or open `/manage/events`. Club Admins
+see their assigned clubs; Super Admins see all clubs. Select an active club to
+create a draft, edit its details, publish, or cancel it. Forms show local device
+time and convert to UTC ISO timestamps for the API. The existing public Events
+and Calendar demo pages will be connected in a later stage.
+
+| Endpoint | Access |
+| --- | --- |
+| `GET /api/v1/events` | Public published events from active clubs |
+| `GET /api/v1/events/{id}` | Public published event, otherwise 404 |
+| `GET /api/v1/clubs/{clubId}/events` | Public published events for an active club |
+| `POST /api/v1/clubs/{clubId}/events` | Assigned Club Admin or Super Admin; creates DRAFT |
+| `PATCH /api/v1/events/{id}` | Authorized event manager; partial profile edits |
+| `PATCH /api/v1/events/{id}/status` | Authorized event manager; `{ "status": "PUBLISHED" }`, `CANCELLED`, or `COMPLETED` |
+| `GET /api/v1/club-admin/clubs/{clubId}/events` | Authorized manager; includes drafts and terminal events |
+| `GET /api/v1/club-admin/events/{id}` | Authorized manager; editor details including creator ID |
+
+Creation requires `title`, `description`, `category`, `venue`, `startAt`, `endAt`,
+`capacity`, and `registrationDeadline`. Dates require ISO timestamps with a UTC
+or offset designation. Start must be in the future, end after start, and deadline
+no later than start. Deadline must also be in the future when creating/publishing.
+Capacity must be an integer from 1 to 1,000,000. Partial edits validate the merged
+schedule; null patch values are ignored, and an empty effective patch is rejected.
+The backend derives `clubId` from the URL and `createdBy` from the authenticated
+account. Neither ownership nor status can be injected through profile requests.
+
+Allowed transitions are DRAFT → PUBLISHED/CANCELLED and PUBLISHED → CANCELLED/COMPLETED.
+Completion requires the event to have ended. CANCELLED and COMPLETED are terminal
+and cannot be edited or reopened. Inactive clubs block creation, profile edits,
+and publishing for all roles; authorized managers can still cancel or complete
+existing events. Club deactivation also hides published events from public reads.
+
+Dates remain BSON UTC dates in the existing `startsAt`/`endsAt` storage fields;
+API DTOs expose `startAt`/`endAt`. Existing IDs and data remain compatible. Date,
+club/date, status/date, and club/status/date indexes support discovery and management.
+Atomic revision checks return 409 if a concurrent update would overwrite changes.
+
 ## Verify builds
 
 ```sh
@@ -292,10 +330,12 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 ```
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
-`campus_auth_test_*`, `campus_rbac_test_*`, and `campus_club_test_*` databases.
+`campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
+`campus_event_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
 role/ownership restrictions, bootstrap safeguards, club uniqueness, assignments,
-soft deletion, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
+soft deletion, event creation/publication, schedule validation, inactive-club
+restrictions, and token expiry. JWT unit tests also run without MongoDB. Build output is
 written to `frontend/dist/` and `backend/target/` (ignored by Git).
