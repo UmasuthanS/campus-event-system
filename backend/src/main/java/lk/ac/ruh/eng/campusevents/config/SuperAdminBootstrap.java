@@ -14,8 +14,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 
 @Component
+@Order(1)
 @Profile("dev")
 @ConditionalOnProperty(name = "app.bootstrap.super-admin.enabled", havingValue = "true")
 public class SuperAdminBootstrap implements ApplicationRunner {

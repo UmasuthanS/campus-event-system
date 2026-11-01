@@ -12,9 +12,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 import lk.ac.ruh.eng.campusevents.domain.Club;
 
 @Component
+@Order(0)
 @Profile("dev")
 @ConditionalOnProperty(name = "app.seed.clubs.enabled", havingValue = "true")
 public class DevelopmentClubSeeder implements ApplicationRunner {

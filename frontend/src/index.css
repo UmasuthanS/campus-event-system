@@ -261,3 +261,9 @@ fieldset:disabled { opacity: .7; }
 .event-toolbar { margin-top: 30px; }
 .event-management-row > * { min-width: 0; }
 .event-management-row .button { padding: 10px 16px; }
+
+.admin-assignment-grid { align-items: start; }
+.admin-assignment-grid > article { min-width: 0; }
+.admin-assignment-grid h2 { overflow-wrap: anywhere; }
+.admin-assignment-grid .assigned-admins li > div { min-width: 0; overflow-wrap: anywhere; }
+.club-admin-panel > section { margin-top: 26px; }

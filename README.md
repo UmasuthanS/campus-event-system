@@ -231,6 +231,37 @@ After the first successful startup, set `BOOTSTRAP_SUPER_ADMIN=false` and remove
 the bootstrap credentials from the environment. The process is disabled by default
 and unavailable outside `dev`, even when its flag is enabled. Super Admins can assign existing accounts to clubs through the club management UI.
 
+### Optional development Club Admin accounts
+
+The existing Super Admin bootstrap remains the only bootstrap for platform
+administrators. Club Admin demo accounts are a separate, disabled-by-default
+seed using the same User model, BCrypt, registration validation, and unique indexes.
+
+In ignored `backend/.env`, enable `SPRING_PROFILES_ACTIVE=dev`, `SEED_CLUBS=true`,
+and `SEED_CLUB_ADMINS=true`. Configure the selected club's environment prefix:
+
+| Club | Credential prefix |
+| --- | --- |
+| IEEE | `DEMO_IEEE_ADMIN_` |
+| ComES | `DEMO_COMES_ADMIN_` |
+| AIESEC | `DEMO_AIESEC_ADMIN_` |
+
+Each prefix requires `NAME`, `REGISTRATION_NUMBER`, `EMAIL`, and `PASSWORD`, using
+the existing registration rules. For example, IEEE uses `DEMO_IEEE_ADMIN_NAME`,
+`DEMO_IEEE_ADMIN_REGISTRATION_NUMBER`, `DEMO_IEEE_ADMIN_EMAIL`, and
+`DEMO_IEEE_ADMIN_PASSWORD`. Supply values privately; none are provided in Git.
+Leave all four values empty to skip a club. At least one complete, distinct
+identity is required when enabling the seed. Load `.env` as documented above.
+
+Startup seeds clubs first, runs the existing Super Admin bootstrap if enabled,
+and then creates/assigns new demo Club Admins. Existing matching Club Admins are
+left unchanged; existing students or conflicting identities cause startup to
+fail without promoting or overwriting accounts. Passwords are hashed and are
+never returned by APIs. Repeated startup does not reset passwords or restore
+revoked assignments. Use the Super Admin interface to change existing access.
+Disable `SEED_CLUB_ADMINS` and remove its credential values after initial setup.
+The seed cannot run outside `dev` even if its flag is enabled.
+
 ## Club management
 
 Start with the `dev` profile and `SEED_CLUBS=true` (the `.env.example` defaults) to
@@ -242,7 +273,10 @@ before enabling unique indexes; no records are automatically removed.
 
 Visit `/clubs` for active clubs and `/clubs/:id` for public profiles. Admins can use
 “Manage clubs” at `/manage/clubs`; Super Admins can create clubs, change status,
-and assign/revoke admins by existing account email. Club Admins see only their
+and assign/revoke admins by existing account email. The Super Admin dashboard
+links directly to `/super-admin/club-administrators`, where each club has a live
+assignment panel showing its current admins. The same controls are reused in
+the club profile editor. Multiple admins per club are supported. Club Admins see only their
 assigned clubs and may edit active profiles. No new dashboards are included. Event management is linked from this page.
 
 | Endpoint | Permission |
@@ -331,7 +365,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
 `campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
-`campus_event_test_*` databases.
+`campus_event_test_*` and `campus_admin_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
