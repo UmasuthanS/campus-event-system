@@ -137,6 +137,7 @@ public class EventService {
         if (event.getStartsAt() == null || !event.getStartsAt().isAfter(now)) throw bad("startAt", "Start time must be in the future.");
         if (event.getEndsAt() == null || !event.getEndsAt().isAfter(event.getStartsAt())) throw bad("endAt", "End time must be after the start.");
         if (event.getCapacity() == null || event.getCapacity() < 1 || event.getCapacity() > 1000000) throw bad("capacity", "Capacity must be between 1 and 1000000.");
+        if (event.getCapacity() < event.getReservedSeats()) throw bad("capacity", "Capacity cannot be lower than the current reserved seats.");
         if (event.getRegistrationDeadline() == null || event.getRegistrationDeadline().isAfter(event.getStartsAt())
                 || opening && !event.getRegistrationDeadline().isAfter(now)) {
             throw bad("registrationDeadline", "Deadline must be no later than the start and must be in the future when creating or publishing.");

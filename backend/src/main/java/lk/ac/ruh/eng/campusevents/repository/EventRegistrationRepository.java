@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface EventRegistrationRepository extends MongoRepository<EventRegistration, ObjectId> {
+    List<EventRegistration> findByEventIdOrderByCreatedAtAsc(ObjectId eventId);
     Optional<EventRegistration> findByEventIdAndUserId(ObjectId eventId, ObjectId userId);
     List<EventRegistration> findByUserIdOrderByCreatedAtDesc(ObjectId userId);
 }

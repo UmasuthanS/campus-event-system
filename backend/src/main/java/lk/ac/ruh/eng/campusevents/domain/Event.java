@@ -19,6 +19,12 @@ public class Event extends AuditedDocument {
     private String category;
     private Instant registrationDeadline;
     private long revision;
+    private java.util.List<Reservation> reservations = new java.util.ArrayList<>();
+
+    public record Reservation(ObjectId token, ObjectId studentId, Instant createdAt, long sequence) { }
+    public java.util.List<Reservation> getReservations() { return reservations == null ? java.util.List.of() : reservations; }
+    public void setReservations(java.util.List<Reservation> reservations) { this.reservations = reservations; }
+    public int getReservedSeats() { return getReservations().size(); }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
