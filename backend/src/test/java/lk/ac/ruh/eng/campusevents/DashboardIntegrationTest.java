@@ -154,6 +154,13 @@ class DashboardIntegrationTest {
             assertThat(call(HttpMethod.GET, "/super-admin/users?page=1", superToken, null).getBody().path("items").size()).isEqualTo(7);
         } finally { users.deleteAllById(extraIds); }
     }
+    @Test
+    void malformedPageParameterReturnsSafeValidationError() {
+        var response = call(HttpMethod.GET, "/super-admin/users?page=invalid", superToken, null);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("INVALID_REQUEST");
+        assertThat(response.getBody().toString()).doesNotContain("NumberFormatException", "java.lang", "stackTrace");
+    }
     private String apply(Event event, String token) {
         var result = call(HttpMethod.POST, "/events/" + event.getId() + "/organizer-applications", token, Map.of("preferredRole", "Logistics", "motivation", "Help campus", "experience", ""));
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED); return result.getBody().path("id").asText();

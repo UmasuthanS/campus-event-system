@@ -8,7 +8,7 @@ export default function AccountPage({ register = false }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const requested = params.get('returnTo') || '';
-  const returnTo = /^\/events\/[0-9a-f]{24}$/i.test(requested) || requested === '/student/my-events' ? requested : '';
+  const returnTo = /^\/events\/[0-9a-f]{24}$/i.test(requested) || ['/student/my-events', '/student/my-applications'].includes(requested) ? requested : '';
   const destination = account => account.role === 'STUDENT' && returnTo ? returnTo : dashboardPath(account.role);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

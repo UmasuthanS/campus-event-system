@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -25,7 +26,7 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(new ApiError(400, "VALIDATION_ERROR", "Check the highlighted fields.", errors));
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ResponseEntity<ApiError> malformed() {
         return ResponseEntity.badRequest().body(new ApiError(400, "INVALID_REQUEST", "Request contains invalid or unsupported fields."));
     }
