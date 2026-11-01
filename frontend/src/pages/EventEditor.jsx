@@ -30,6 +30,9 @@ export default function EventEditor() {
     }).catch(failure => { if (active) setError(failure.message); });
     return () => { active = false; };
   }, [id, request, params, location.state]);
+  useEffect(() => {
+    if (event && location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  }, [event?.id, location.hash]);
   async function perform(action, success) {
     if (busy) return;
     setBusy(true); setError(''); setErrors({}); setMessage('');

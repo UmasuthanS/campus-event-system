@@ -314,3 +314,14 @@ fieldset:disabled { opacity: .7; }
 .participants-panel th { color: var(--maroon); }
 
 .application-copy { max-width: 32rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 16px; margin-block: 24px; }
+.dashboard-stats > div { padding: 20px; border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 8px; background: var(--paper); }
+.dashboard-stats dt { font-size: .85rem; color: var(--muted); }
+.dashboard-stats dd { margin: 8px 0 0; font-size: 2rem; font-weight: 750; color: var(--maroon); }
+.dashboard-section { margin-block: 30px; }
+.dashboard-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+.dashboard-upcoming { list-style: none; padding: 0; display: grid; gap: 12px; }
+.dashboard-upcoming li { padding: 16px; border-left: 3px solid var(--gold); background: var(--paper); }
+.dashboard-upcoming span { display: block; margin-top: 8px; font-size: .85rem; }
+#participants, #organizer-applications { scroll-margin-top: 100px; }

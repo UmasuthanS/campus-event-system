@@ -60,8 +60,7 @@ optional for default-profile startup, liveness verification, and the default tes
 may log background connection failures when no database is running.
 Health endpoints and the registration/login POST endpoints are public.
 `GET /api/v1/users/me` requires a valid Bearer token. Public discovery GET endpoints
-return clubs and published events. Club management is available to authorized admins; event creation and management are available to authorized admins. Full dashboards
-remain placeholders.
+return clubs and published events. Club management is available to authorized admins; event creation and management are available to authorized admins. Role-specific dashboards show live records and statistics.
 
 ## Local MongoDB setup
 
@@ -456,6 +455,39 @@ version guards prevent stale writes, and student/admin reads recover interrupted
 projection writes. Existing club-based records are preserved, without treating them
 as event applications. No replica set or new dependencies are required.
 
+## Functional dashboards
+
+Students use `/student/dashboard` to view their profile, confirmed registration
+count, upcoming published registrations, all participant statuses, and organizer
+application statuses. The page reuses `/users/me`, `/users/me/registrations`, and
+`/users/me/organizer-applications`; cancellation uses the existing RSVP endpoint.
+Only confirmed registrations count as registered; past confirmed registrations
+remain in the total. Upcoming means PUBLISHED with a future start, displayed in
+Asia/Colombo. Cancelled registrations remain visible in history.
+
+Club Admins use `/club-admin/dashboard` for assigned club information, event totals,
+confirmed participant counts, and pending organizer counts, with links to event
+creation, editing, participants, and organizer review. Inactive assigned clubs remain
+visible. The backend selects assignments using the authenticated account, never a
+client-provided club ID.
+
+Super Admins use `/super-admin/dashboard` for platform-wide student, club, and event
+statistics, administrator assignments, and existing club/access management links.
+`/super-admin/users` is a searchable, paginated account directory; club access is
+managed through the existing administrator assignment workflow. User creation,
+deletion, and arbitrary role changes are outside this stage.
+
+New protected GET endpoints are `/api/v1/club-admin/dashboard`,
+`/api/v1/super-admin/dashboard`, and `/api/v1/super-admin/users?search=&page=0`.
+The directory returns at most 20 safe user DTOs per page and a `hasNext` flag; hashes
+are never returned. Summary queries aggregate the authoritative event reservation
+and organizer ledgers directly in MongoDB, excluding private ledger contents.
+Counts include inactive clubs, past events, and all event statuses unless the label
+specifies upcoming or published. Student totals count accounts with role STUDENT.
+Platform summaries batch-load assignment users and omit individual event rows;
+club summaries return event rows for assigned clubs only. Refresh controls reload
+live data; no mocked statistics, polling, or charts are used.
+
 ## Verify builds
 
 ```sh
@@ -477,7 +509,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
 `campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
-`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` and `campus_rsvp_test_*` and `campus_organizer_test_*` databases.
+`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` and `campus_rsvp_test_*` and `campus_organizer_test_*` and `campus_dashboard_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
