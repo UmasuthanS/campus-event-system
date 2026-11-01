@@ -1,15 +1,19 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { dashboardPath } from '../auth/roles';
 
 export default function AccountPage({ register = false }) {
   const { user, authenticate } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const requested = params.get('returnTo') || '';
+  const returnTo = /^\/events\/[0-9a-f]{24}$/i.test(requested) || requested === '/student/my-events' ? requested : '';
+  const destination = account => account.role === 'STUDENT' && returnTo ? returnTo : dashboardPath(account.role);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fields, setFields] = useState({});
-  if (user) return <Navigate to={dashboardPath(user.role)} replace />;
+  if (user) return <Navigate to={destination(user)} replace />;
 
   async function submit(event) {
     event.preventDefault();
@@ -19,7 +23,7 @@ export default function AccountPage({ register = false }) {
     setFields({});
     try {
       const account = await authenticate(register ? 'register' : 'login', Object.fromEntries(new FormData(event.currentTarget)));
-      navigate(dashboardPath(account.role), { replace: true });
+      navigate(destination(account), { replace: true });
     } catch (failure) {
       setError(failure.message);
       setFields(failure.fields || {});
@@ -49,7 +53,7 @@ export default function AccountPage({ register = false }) {
           <button className="button button-primary" type="submit" disabled={loading}>{loading ? 'Please wait…' : register ? 'Create student account' : 'Sign in'} <span aria-hidden="true">↗</span></button>
         </form>
         <p className="form-hint">For your security, your session lasts up to 15 minutes or when this page reloads.</p>
-        <p className="account-switch">{register ? 'Already part of the community?' : 'New to Campus Connect?'} <Link to={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</Link></p>
+        <p className="account-switch">{register ? 'Already part of the community?' : 'New to Campus Connect?'} <Link to={`${register ? '/login' : '/register'}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}>{register ? 'Sign in' : 'Create an account'}</Link></p>
       </div>
       <aside className="account-aside"><span className="eyebrow">Ruhuna · Campus Connect</span><p>Curiosity brings us here.<br /><em>Community makes it home.</em></p><span>University of Ruhuna<br />Faculty of Engineering</span></aside>
     </section>

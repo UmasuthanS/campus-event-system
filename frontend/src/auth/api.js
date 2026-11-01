@@ -18,7 +18,7 @@ export async function apiRequest(path, { token, ...options } = {}) {
     error.fields = body.errors || {};
     throw error;
   }
-  if (options.method && options.method !== 'GET' && /^\/(events|clubs|super-admin\/clubs|club-admin\/clubs)(\/|$)/.test(path)) publicCache.clear();
+  if (options.method && options.method !== 'GET' && /^\/(events|registrations|clubs|super-admin\/clubs|club-admin\/clubs)(\/|$)/.test(path)) publicCache.clear();
   return body;
 }
 

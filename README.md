@@ -347,7 +347,7 @@ Atomic revision checks return 409 if a concurrent update would overwrite changes
 category filters, upcoming/ongoing or past filters, and ascending/descending start
 time sorting. `/calendar` uses FullCalendar React with Month, Week, and List views.
 Mobile initially opens the List view; all three views remain available. Click a
-card or calendar event to open `/events/{id}`. RSVP is not implemented.
+card or calendar event to open `/events/{id}`. Students can register from the event details page.
 
 IEEE, ComES, and AIESEC use distinct blue, maroon, and green event colors with
 text labels and a legend. All public dates, calendar boundaries, and management
@@ -374,6 +374,52 @@ avoid duplicate requests; event/club mutations invalidate it. Calendar requests
 are restricted to its visible date range, and late responses cannot replace newer
 filters. FullCalendar is loaded only when visiting the Calendar route.
 
+## Student event registration (RSVP)
+
+Authenticated STUDENT accounts can register from published event details and view
+`/student/my-events` using the dashboard's “My events” link. Anonymous registration
+clicks open Login and return to the event after sign-in or account creation. Return
+paths are restricted to internal event details/My Events routes. Register/cancel
+operations require confirmation and disable repeat submissions while pending.
+All registration dates display in Asia/Colombo.
+
+| Endpoint | Access |
+| --- | --- |
+| `POST /api/v1/events/{eventId}/registrations` | STUDENT; no request fields; returns 201 |
+| `GET /api/v1/users/me/registrations` | STUDENT; only the signed-in student's current registration/history rows |
+| `DELETE /api/v1/registrations/{registrationId}` | Owning STUDENT; idempotent cancellation returns 200 |
+| `GET /api/v1/events/{eventId}/registrations` | Assigned Club Admin or Super Admin; private participants table |
+
+The JWT supplies student identity. Registration requires an active club, a
+PUBLISHED event, a future start, an unexpired deadline, and a free seat. Duplicate
+active reservations, full events, or closed windows return 409; ownership failures
+return 403 and anonymous requests return 401. Client-supplied identity fields are
+rejected. Students may cancel before the event starts, or withdraw from a cancelled
+event. Completion closes cancellation. Deadline expiry alone does not prevent a
+student cancelling before start. Public event DTOs expose `remainingSeats` and
+`registrationOpen`, never attendee IDs or private profiles.
+
+Capacity is enforced on the event document with an atomic, revision-checked
+reservation ledger and capacity predicate. Each attempt has an immutable token;
+removing that token releases its seat idempotently without affecting a later
+re-registration. Event edits share the revision guard and cannot lower capacity
+below reserved seats. This works on standalone MongoDB; a replica set is not required.
+
+The existing `event_registrations` collection stores the per-event/student row,
+status, `studentId`, timestamps, attempt token, and monotonic sequence. `userId` is
+retained for compatibility with existing queries/indexes. Re-registration reuses
+the unique event/user row and clears `cancelledAt`. Event reservations are the
+capacity authority; My Events and participant reads reconcile interrupted history
+writes. Sequence guards prevent stale writes from restoring cancelled history.
+Existing confirmed registration documents are imported into the ledger on first
+RSVP access. Participant responses contain names and university registration
+numbers only for authorized admins, without passwords or email addresses.
+
+Concurrency tests run against real MongoDB when `MONGODB_TEST_URI` is set. They
+cover simultaneous last-seat claims, duplicate submissions, repeated cancellations,
+re-registration, history recovery, ownership, and participant privacy. Organizer
+applications are outside this stage.
+
 ## Verify builds
 
 ```sh
@@ -395,7 +441,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
 `campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
-`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` databases.
+`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` and `campus_rsvp_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,

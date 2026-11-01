@@ -304,3 +304,11 @@ fieldset:disabled { opacity: .7; }
 .campus-calendar .fc-daygrid-event .fc-event-main-frame { display: block; padding: 3px 4px; }
 .campus-calendar .fc-daygrid-event .fc-event-time { display: block; white-space: normal; font-size: .65rem; }
 .campus-calendar .fc-daygrid-event .fc-event-title { text-align: left; font-weight: 600; }
+
+.rsvp-panel, .participants-panel { margin-block: 30px; padding: 25px; border-top: 3px solid var(--gold); background: var(--paper); }
+.rsvp-panel > .text-link { display: inline-flex; margin: 20px 0 0; }
+.table-scroll { overflow-x: auto; max-width: 100%; }
+.participants-panel table { width: 100%; border-collapse: collapse; background: white; font-size: .8rem; }
+.participants-panel caption { text-align: left; padding-block: 12px; color: var(--maroon); font-weight: 650; }
+.participants-panel th, .participants-panel td { padding: 13px; text-align: left; border: 1px solid var(--line); }
+.participants-panel th { color: var(--maroon); }
