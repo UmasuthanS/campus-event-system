@@ -267,3 +267,40 @@ fieldset:disabled { opacity: .7; }
 .admin-assignment-grid h2 { overflow-wrap: anywhere; }
 .admin-assignment-grid .assigned-admins li > div { min-width: 0; overflow-wrap: anywhere; }
 .club-admin-panel > section { margin-top: 26px; }
+
+/* Public discovery and FullCalendar */
+.discovery-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; margin-block: 28px; padding: 22px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; }
+.discovery-filters .form-field { flex: 1 1 145px; min-width: 0; margin: 0; }
+.discovery-filters .form-field:first-child { flex-basis: 220px; }
+.discovery-filters select { width: 100%; padding: 12px; border: 1px solid #cdbfba; border-radius: 3px; background: white; font: inherit; font-size: .85rem; }
+.discovery-filters > button { padding-block: 13px; }
+.calendar-legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: .78rem; margin-block: 22px; }
+.calendar-legend span { display: inline-flex; gap: 8px; align-items: center; }
+.calendar-legend i { width: 12px; height: 12px; border-radius: 50%; }
+.campus-calendar { margin-top: 22px; --fc-button-bg-color: #6B0F14; --fc-button-border-color: #6B0F14; --fc-button-hover-bg-color: #4c090d; --fc-button-hover-border-color: #4c090d; --fc-button-active-bg-color: #4c090d; --fc-button-active-border-color: #4c090d; --fc-today-bg-color: #f7be191c; --fc-border-color: #e9e2dd; --fc-list-event-hover-bg-color: #faf8f5; }
+.campus-calendar .fc { font-size: .82rem; }
+.campus-calendar .fc-toolbar-title { font-family: Georgia, serif; color: var(--maroon); font-size: 1.8rem; }
+.campus-calendar .fc-button { padding: 9px 12px; text-transform: capitalize; }
+.campus-calendar .fc-event { cursor: pointer; }
+.campus-calendar .fc-list-event-title a { color: var(--ink); }
+.campus-calendar .fc-daygrid-event .fc-event-title { white-space: normal; overflow-wrap: anywhere; }
+.campus-calendar .fc-timegrid-event .fc-event-main { overflow: hidden; }
+.event-detail-panel { border-top: 4px solid; padding-block: 25px; }
+.event-detail-panel .profile-details { margin-block: 25px; }
+.event-card .card-description { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-feature h2 { overflow-wrap: anywhere; }
+@media (max-width: 800px) { .campus-calendar .fc-toolbar { flex-wrap: wrap; gap: 15px; } }
+@media (max-width: 560px) {
+  .discovery-filters { padding: 16px; }
+  .discovery-filters .form-field { flex-basis: 100%; }
+  .campus-calendar .fc-toolbar { flex-direction: column; align-items: stretch; }
+  .campus-calendar .fc-toolbar-chunk { display: flex; justify-content: center; }
+  .campus-calendar .fc-toolbar-title { font-size: 1.5rem; }
+  .campus-calendar .fc-button { padding: 9px; }
+  .campus-calendar .fc-list-event-time { white-space: normal; }
+  .campus-calendar .fc { font-size: .7rem; }
+}
+
+.campus-calendar .fc-daygrid-event .fc-event-main-frame { display: block; padding: 3px 4px; }
+.campus-calendar .fc-daygrid-event .fc-event-time { display: block; white-space: normal; font-size: .65rem; }
+.campus-calendar .fc-daygrid-event .fc-event-title { text-align: left; font-weight: 600; }

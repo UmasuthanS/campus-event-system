@@ -28,21 +28,43 @@ public class EventService {
     public EventService(EventRepository events, ClubRepository clubs, MongoTemplate mongo, EventIndexes indexes) {
         this.events = events; this.clubs = clubs; this.mongo = mongo; this.indexes = indexes;
     }
-    public List<EventResponse> publishedEvents() {
+    public List<EventResponse> publishedEvents(EventSearch filter) {
+        return mongo.find(publicQuery(filter), Event.class).stream().map(event -> EventResponse.from(event, false)).toList();
+    }
+    public List<String> categories() {
+        var values = new java.util.TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        mongo.findDistinct(publicQuery(new EventSearch(null, null, null, null, null, null, null)), "category", Event.class, String.class)
+                .stream().filter(value -> value != null && !value.isBlank()).forEach(values::add);
+        return List.copyOf(values);
+    }
+    private Query publicQuery(EventSearch filter) {
+        if (filter.from() != null && filter.to() != null && !filter.to().isAfter(filter.from())) {
+            throw bad("to", "Range end must be after range start.");
+        }
         var activeIds = clubs.findActive().stream().map(Club::getId).toList();
-        return events.findByStatusAndClubIdInOrderByStartsAtAsc(EventStatus.PUBLISHED, activeIds)
-                .stream().map(event -> EventResponse.from(event, false)).toList();
+        var criteria = new java.util.ArrayList<Criteria>();
+        criteria.add(Criteria.where("status").is(EventStatus.PUBLISHED));
+        criteria.add(Criteria.where("clubId").in(activeIds));
+        if (filter.clubId() != null) criteria.add(Criteria.where("clubId").is(new ObjectId(filter.clubId())));
+        if (filter.search() != null && !filter.search().isBlank()) criteria.add(Criteria.where("title").regex(java.util.regex.Pattern.quote(filter.search().strip()), "i"));
+        if (filter.category() != null && !filter.category().isBlank()) criteria.add(Criteria.where("category").regex("^" + java.util.regex.Pattern.quote(filter.category().strip()) + "$", "i"));
+        // Calendar intervals overlap [from, to); events ending at from or starting at to are excluded.
+        if (filter.from() != null) criteria.add(Criteria.where("endsAt").gt(filter.from()));
+        if (filter.to() != null) criteria.add(Criteria.where("startsAt").lt(filter.to()));
+        if ("upcoming".equals(filter.period())) criteria.add(Criteria.where("endsAt").gt(Instant.now()));
+        if ("past".equals(filter.period())) criteria.add(Criteria.where("endsAt").lte(Instant.now()));
+        var direction = "desc".equals(filter.sort()) ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC;
+        return Query.query(new Criteria().andOperator(criteria)).with(org.springframework.data.domain.Sort.by(direction, "startsAt").and(org.springframework.data.domain.Sort.by("_id")));
     }
     public EventResponse publishedEvent(String id) {
         Event event = find(id);
         if (event.getStatus() != EventStatus.PUBLISHED || !active(event.getClubId())) throw notFound();
         return EventResponse.from(event, false);
     }
-    public List<EventResponse> clubEvents(String clubId) {
+    public List<EventResponse> clubEvents(String clubId, EventSearch filter) {
         Club club = club(clubId);
         if (club.getStatus() != ClubStatus.ACTIVE) throw notFound();
-        return events.findByClubIdAndStatusOrderByStartsAtAsc(club.getId(), EventStatus.PUBLISHED)
-                .stream().map(event -> EventResponse.from(event, false)).toList();
+        return publishedEvents(new EventSearch(filter.search(), clubId, filter.category(), filter.period(), filter.sort(), filter.from(), filter.to()));
     }
     @PreAuthorize("@clubAuthorization.canView(authentication, #clubId)")
     public List<EventResponse> managedEvents(String clubId) {

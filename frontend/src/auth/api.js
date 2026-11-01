@@ -1,3 +1,5 @@
+const publicCache = new Map();
+
 export async function apiRequest(path, { token, ...options } = {}) {
   let response;
   try {
@@ -16,5 +18,17 @@ export async function apiRequest(path, { token, ...options } = {}) {
     error.fields = body.errors || {};
     throw error;
   }
+  if (options.method && options.method !== 'GET' && /^\/(events|clubs|super-admin\/clubs|club-admin\/clubs)(\/|$)/.test(path)) publicCache.clear();
   return body;
 }
+
+// Cache only anonymous public reads, including in-flight requests across React StrictMode mounts.
+export function publicRequest(path) {
+  const cached = publicCache.get(path);
+  if (cached && cached.expires > Date.now()) return cached.promise;
+  const promise = apiRequest(path).catch(error => { publicCache.delete(path); throw error; });
+  publicCache.set(path, { promise, expires: Date.now() + 30000 });
+  if (publicCache.size > 50) publicCache.delete(publicCache.keys().next().value);
+  return promise;
+}
+export function clearPublicCache(path) { path ? publicCache.delete(path) : publicCache.clear(); }

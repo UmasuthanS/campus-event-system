@@ -1,12 +1,12 @@
-import { useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import PageHeading from '../components/PageHeading';
-import DemoNotice from '../components/DemoNotice';
 import EventCard from '../components/EventCard';
-import { events, clubs } from '../data/demo';
+import EventFilters from '../components/EventFilters';
+import { useEventDiscovery, usePublicData } from '../events/discovery';
 
 export default function Events() {
-  const [params, setParams] = useSearchParams();
-  const selectedClub = params.get('club') || '';
-  const visibleEvents = events.filter(event => !selectedClub || event.club === selectedClub);
-  return <section className="container page-section"><PageHeading eyebrow="Explore & connect" title="What’s happening on campus">From a new skill to a new connection, your next experience starts here.</PageHeading><DemoNotice /><div className="filter-bar"><label htmlFor="club-filter">Browse by club</label><select id="club-filter" value={selectedClub} onChange={e => setParams(e.target.value ? { club: e.target.value } : {})}><option value="">All clubs</option>{!clubs.some(club => club.name === selectedClub) && selectedClub && <option value={selectedClub}>{selectedClub}</option>}{clubs.map(club => <option key={club.name}>{club.name}</option>)}</select><span aria-live="polite">{visibleEvents.length} demo {visibleEvents.length === 1 ? 'event' : 'events'}</span></div><div className="card-grid">{visibleEvents.map(event => <EventCard key={event.id} event={event} />)}</div>{visibleEvents.length === 0 && <p className="empty-state">No demo events for this club. Choose “All clubs” to explore the sample lineup.</p>}</section>;
+  const discovery = useEventDiscovery();
+  const events = usePublicData(`/events?${discovery.query}`);
+  const error = events.error || discovery.clubs.error || discovery.categories.error;
+  return <section className="container page-section"><PageHeading eyebrow="Explore & connect" title="What’s happening on campus">Discover published events from the Faculty of Engineering. All times are shown in Asia/Colombo.</PageHeading><Link className="text-link" to={`/calendar?${discovery.query}`}>Explore the interactive calendar ↗</Link><EventFilters discovery={discovery} />{error && <div className="form-error" role="alert">{error} <button className="text-link" onClick={() => { if (events.error) events.retry(); if (discovery.clubs.error) discovery.clubs.retry(); if (discovery.categories.error) discovery.categories.retry(); }}>Try again</button></div>}{events.loading && <p role="status">Loading published events…</p>}{!events.loading && events.data && <p className="form-hint" role="status">{events.data.length} published {events.data.length === 1 ? 'event' : 'events'}</p>}{events.data?.length === 0 && <p className="empty-state">No published events match your filters. Try another club, category, or date period.</p>}<div className="card-grid">{events.data?.map(event => <EventCard key={event.id} event={event} club={discovery.clubs.data?.find(club => club.id === event.clubId)} />)}</div></section>;
 }

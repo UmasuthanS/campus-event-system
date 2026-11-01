@@ -205,8 +205,7 @@ are restricted to Super Admins. Unauthenticated protected
 requests return 401; insufficient permissions return 403. Database failures fail
 closed with 503. Deleting an account invalidates its tokens.
 
-The club listing and profiles use real API data. Public event pages and homepage club previews retain their labeled demo data.
-Admin event management uses real API data.
+The club listing and profiles use real API data. Public event discovery, the homepage, club profiles, and admin event management use real API data.
 
 ### Development-only Super Admin bootstrap
 
@@ -309,9 +308,7 @@ profiles return 404 until reactivated.
 
 Use “Manage events” from `/manage/clubs`, or open `/manage/events`. Club Admins
 see their assigned clubs; Super Admins see all clubs. Select an active club to
-create a draft, edit its details, publish, or cancel it. Forms show local device
-time and convert to UTC ISO timestamps for the API. The existing public Events
-and Calendar demo pages will be connected in a later stage.
+create a draft, edit its details, publish, or cancel it. Forms show Asia/Colombo time and convert to UTC ISO timestamps for the API. Public discovery and the interactive calendar are available at `/events` and `/calendar`.
 
 | Endpoint | Access |
 | --- | --- |
@@ -344,6 +341,39 @@ API DTOs expose `startAt`/`endAt`. Existing IDs and data remain compatible. Date
 club/date, status/date, and club/status/date indexes support discovery and management.
 Atomic revision checks return 409 if a concurrent update would overwrite changes.
 
+## Event discovery and calendar
+
+`/events` displays responsive published-event cards with title search, club and
+category filters, upcoming/ongoing or past filters, and ascending/descending start
+time sorting. `/calendar` uses FullCalendar React with Month, Week, and List views.
+Mobile initially opens the List view; all three views remain available. Click a
+card or calendar event to open `/events/{id}`. RSVP is not implemented.
+
+IEEE, ComES, and AIESEC use distinct blue, maroon, and green event colors with
+text labels and a legend. All public dates, calendar boundaries, and management
+forms use `Asia/Colombo` regardless of the browser timezone. Stored/API timestamps
+remain UTC. No event fixtures are seeded into the application database.
+
+`GET /api/v1/events` and `GET /api/v1/clubs/{clubId}/events` accept:
+
+| Parameter | Meaning |
+| --- | --- |
+| `search` | Case-insensitive literal title substring, maximum 120 characters |
+| `clubId` | MongoDB club ID (club-scoped route always uses its URL club) |
+| `category` | Case-insensitive exact category, maximum 80 characters |
+| `period` | `all` (default), `upcoming` (includes ongoing), or `past`; based on end time |
+| `sort` | `asc` (default) or `desc`, ordered by start time |
+| `from`, `to` | ISO timestamps; return events overlapping `[from, to)` |
+
+`GET /api/v1/events/categories` returns categories from published events belonging
+to active clubs. Draft, cancelled, completed, and inactive-club events remain
+excluded from every public discovery path. Invalid filters return 400.
+
+Search is debounced. Public reads share a bounded 30-second/in-flight cache to
+avoid duplicate requests; event/club mutations invalidate it. Calendar requests
+are restricted to its visible date range, and late responses cannot replace newer
+filters. FullCalendar is loaded only when visiting the Calendar route.
+
 ## Verify builds
 
 ```sh
@@ -365,7 +395,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
 `campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
-`campus_event_test_*` and `campus_admin_test_*` databases.
+`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
