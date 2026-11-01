@@ -1,6 +1,12 @@
 package lk.ac.ruh.eng.campusevents;
 
 import org.junit.jupiter.api.Test;
+import lk.ac.ruh.eng.campusevents.auth.JwtService;
+import lk.ac.ruh.eng.campusevents.domain.User;
+import org.bson.types.ObjectId;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -17,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HealthEndpointTest {
     @Autowired
     private TestRestTemplate client;
+    @Autowired private JwtService jwt;
 
     @Test
     void healthIsPublicEvenWhenMongoIsUnavailable() {
@@ -34,7 +41,17 @@ class HealthEndpointTest {
 
     @Test
     void otherRoutesRemainDenied() {
-        var response = client.getForEntity("/api/v1/events", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        var response = client.getForEntity("/api/v1/private-resource", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+    @Test
+    void authenticatedDatabaseFailureReturns503WithoutLeakingDetails() {
+        User user = new User();
+        user.setId(new ObjectId());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwt.issue(user).accessToken());
+        var response = client.exchange("/api/v1/users/me", HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody()).contains("DATABASE_UNAVAILABLE").doesNotContain("mongodb", "27017");
     }
 }

@@ -212,3 +212,18 @@ em { font-weight: 400; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Student authentication */
+.form-field { margin-bottom: 18px; }
+.form-field label { display: block; margin-bottom: 7px; font-size: .8rem; font-weight: 650; }
+.form-field input { width: 100%; padding: 13px; border: 1px solid #cdbfba; border-radius: 3px; font: inherit; font-size: .9rem; background: white; }
+.form-field input[aria-invalid="true"] { border-color: var(--maroon); }
+.form-error { padding: 14px; margin-bottom: 20px; border-left: 3px solid var(--maroon); background: #fff0ed; color: var(--maroon); line-height: 1.7; font-size: .85rem; }
+.field-error { margin-top: 6px; color: var(--maroon); font-size: .75rem; line-height: 1.6; }
+.form-hint { color: var(--muted); font-size: .73rem; line-height: 1.8; margin-block: 15px; }
+button:disabled, input:disabled { opacity: .65; cursor: wait; }
+.nav-logout { border: 1px solid var(--line); background: white; color: var(--maroon); padding: 10px 18px; border-radius: 3px; }
+.nav-logout:hover { background: var(--paper); }
+.profile-details { display: grid; gap: 16px; padding: 25px; background: var(--paper); border-left: 3px solid var(--gold); max-width: 650px; }
+.profile-details dt { font-size: .72rem; color: var(--muted); margin-bottom: 5px; }
+.profile-details dd { margin: 0; overflow-wrap: anywhere; }

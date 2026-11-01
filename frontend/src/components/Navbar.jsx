@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router';
+import { useAuth } from '../auth/AuthContext';
+import { dashboardPath, rolePages } from '../auth/roles';
 
 const links = [['/', 'Home'], ['/events', 'Events'], ['/calendar', 'Calendar'], ['/clubs', 'Clubs'], ['/login', 'Login'], ['/register', 'Register']];
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
+  const visibleLinks = user ? [...links.slice(0, 4), [dashboardPath(user.role), rolePages[user.role]?.navLabel || 'Dashboard']] : links;
   const [open, setOpen] = useState(false);
   return (
     <header>
@@ -15,7 +19,8 @@ export default function Navbar() {
         </Link>
         <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}>{open ? 'Close ✕' : 'Menu ☰'}</button>
         <nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-links is-open' : 'nav-links'}>
-          {links.map(([path, label]) => <NavLink key={path} to={path} end={path === '/'} className={path === '/register' ? 'nav-register' : undefined} onClick={() => setOpen(false)}>{label}</NavLink>)}
+          {visibleLinks.map(([path, label]) => <NavLink key={path} to={path} end={path === '/'} className={path === '/register' ? 'nav-register' : undefined} onClick={() => setOpen(false)}>{label}</NavLink>)}
+          {user && <button type="button" className="nav-logout" onClick={() => { logout(); setOpen(false); }}>Logout</button>}
         </nav>
       </div>
     </header>

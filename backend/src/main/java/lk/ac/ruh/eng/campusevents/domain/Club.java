@@ -1,5 +1,9 @@
 package lk.ac.ruh.eng.campusevents.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+import org.bson.types.ObjectId;
+
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,6 +13,10 @@ public class Club extends AuditedDocument {
     private String code;
     private String name;
     private String description;
+    private Set<ObjectId> adminIds = new HashSet<>();
+
+    public Set<ObjectId> getAdminIds() { return adminIds; }
+    public void setAdminIds(Set<ObjectId> adminIds) { this.adminIds = adminIds; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
