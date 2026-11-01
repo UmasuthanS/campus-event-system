@@ -417,8 +417,44 @@ numbers only for authorized admins, without passwords or email addresses.
 
 Concurrency tests run against real MongoDB when `MONGODB_TEST_URI` is set. They
 cover simultaneous last-seat claims, duplicate submissions, repeated cancellations,
-re-registration, history recovery, ownership, and participant privacy. Organizer
-applications are outside this stage.
+re-registration, history recovery, ownership, and participant privacy. Organizer applications use the workflow described below.
+
+## Event organizing applications
+
+Club admins enable recruitment in the event editor with `organizerCapacity` (0–1000;
+0 disables applications) and `organizingApplicationDeadline` (UTC, no later than
+start). Existing events default to disabled. Students apply from published event
+details, track decisions at `/student/my-applications`, and withdraw PENDING or
+APPROVED applications before start, or when an event is CANCELLED. COMPLETED events
+cannot be withdrawn from. Rejected/withdrawn students may submit a new application;
+previous decisions remain in their history.
+
+**Role policy:** a student cannot hold an active RSVP and a PENDING/APPROVED organizer
+application for the same event. Cancel the RSVP before applying, or withdraw the
+application before registering. Approval does not consume participant seats.
+
+| Endpoint | Access |
+| --- | --- |
+| `POST /api/v1/events/{eventId}/organizer-applications` | STUDENT; preferredRole, motivation, experience; returns 201 |
+| `GET /api/v1/users/me/organizer-applications` | STUDENT; own history |
+| `GET /api/v1/events/{eventId}/organizer-applications` | Assigned Club Admin or SUPER_ADMIN |
+| `PATCH /api/v1/organizer-applications/{id}/status` | Assigned Club Admin or SUPER_ADMIN; APPROVED or REJECTED |
+| `DELETE /api/v1/organizer-applications/{id}` | Owning STUDENT; eligible, idempotent withdrawal |
+| `GET /api/v1/events/{eventId}/organizing-team` | Public; published, active-club events; approved names and roles only |
+
+Applications require an active club, a published future event, and an open organizing
+deadline. Admins can review pending applications after the application deadline until
+the event starts. Only pending applications can be approved/rejected; admins cannot
+review their own applications. Application details, experience, registration numbers,
+and motivations remain private to the applicant and authorized admins.
+
+The event document stores the authoritative application ledger. Atomic compare-and-set
+updates use the same revision as RSVP and event edits, enforcing team capacity,
+duplicate prevention, and role exclusivity even under concurrent requests on standalone
+MongoDB. The existing `organizer_applications` collection is a history projection;
+version guards prevent stale writes, and student/admin reads recover interrupted
+projection writes. Existing club-based records are preserved, without treating them
+as event applications. No replica set or new dependencies are required.
 
 ## Verify builds
 
@@ -441,7 +477,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
 `campus_auth_test_*`, `campus_rbac_test_*`, `campus_club_test_*`, and
-`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` and `campus_rsvp_test_*` databases.
+`campus_event_test_*`, `campus_admin_test_*`, and `campus_discovery_test_*` and `campus_rsvp_test_*` and `campus_organizer_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,

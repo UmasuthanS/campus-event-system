@@ -8,11 +8,14 @@ import lk.ac.ruh.eng.campusevents.domain.EventStatus;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record EventResponse(String id, String clubId, String title, String description, String category,
         String venue, Instant startAt, Instant endAt, Integer capacity, Instant registrationDeadline,
-        EventStatus status, int remainingSeats, boolean registrationOpen, String createdBy, Instant createdAt, Instant updatedAt) {
+        Integer organizerCapacity, Instant organizingApplicationDeadline, long remainingOrganizerPlaces, boolean organizingApplicationsOpen, EventStatus status, int remainingSeats, boolean registrationOpen, String createdBy, Instant createdAt, Instant updatedAt) {
     public static EventResponse from(Event event, boolean management) {
         return new EventResponse(event.getId().toHexString(), event.getClubId() == null ? null : event.getClubId().toHexString(),
                 event.getTitle(), event.getDescription(), event.getCategory(), event.getVenue(), event.getStartsAt(), event.getEndsAt(),
-                event.getCapacity(), event.getRegistrationDeadline(), event.getStatus(),
+                event.getCapacity(), event.getRegistrationDeadline(), event.getOrganizerCapacity(), event.getOrganizingApplicationDeadline(),
+                Math.max(0, event.getOrganizerCapacity() - event.getApprovedOrganizers()), event.getStatus() == EventStatus.PUBLISHED
+                && event.getOrganizerCapacity() > 0 && event.getOrganizingApplicationDeadline() != null && event.getOrganizingApplicationDeadline().isAfter(Instant.now())
+                && event.getStartsAt() != null && event.getStartsAt().isAfter(Instant.now()), event.getStatus(),
                 Math.max(0, (event.getCapacity() == null ? 0 : event.getCapacity()) - event.getReservedSeats()),
                 event.getStatus() == EventStatus.PUBLISHED && event.getRegistrationDeadline() != null
                         && event.getRegistrationDeadline().isAfter(Instant.now()) && event.getStartsAt() != null && event.getStartsAt().isAfter(Instant.now()),

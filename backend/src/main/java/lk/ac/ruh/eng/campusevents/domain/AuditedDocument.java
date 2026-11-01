@@ -16,6 +16,8 @@ public abstract class AuditedDocument {
 
     public ObjectId getId() { return id; }
     public void setId(ObjectId id) { this.id = id; }
+    public void setCreatedAt(Instant value) { createdAt = value; }
+    public void setUpdatedAt(Instant value) { updatedAt = value; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

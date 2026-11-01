@@ -312,3 +312,5 @@ fieldset:disabled { opacity: .7; }
 .participants-panel caption { text-align: left; padding-block: 12px; color: var(--maroon); font-weight: 650; }
 .participants-panel th, .participants-panel td { padding: 13px; text-align: left; border: 1px solid var(--line); }
 .participants-panel th { color: var(--maroon); }
+
+.application-copy { max-width: 32rem; white-space: pre-wrap; overflow-wrap: anywhere; }
