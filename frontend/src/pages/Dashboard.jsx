@@ -1,25 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { rolePages } from '../auth/roles';
 import { useAuth } from '../auth/AuthContext';
 import PageHeading from '../components/PageHeading';
+import { StudentPanel, AdministratorPanel } from '../dashboards/DashboardPanels';
 
 export default function Dashboard({ role }) {
   const { request, logout } = useAuth();
   const navigate = useNavigate();
   const page = rolePages[role];
-  const [profile, setProfile] = useState(null);
+  const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [version, setVersion] = useState(0);
   useEffect(() => {
     let active = true;
-    Promise.all([request('/users/me'), request(page.access)])
-      .then(([data]) => { if (active) setProfile(data); })
-      .catch(failure => {
-        if (!active) return;
-        if (failure.status === 403) navigate('/unauthorized', { replace: true });
-        else setError(failure.message);
-      });
+    setData(null); setError('');
+    const calls = role === 'STUDENT' ? [request('/users/me/registrations'), request('/users/me/organizer-applications')] : [request(role === 'SUPER_ADMIN' ? '/super-admin/dashboard' : '/club-admin/dashboard')];
+    Promise.all([request('/users/me'), ...calls]).then(([profile, first, second]) => {
+      if (active) setData(role === 'STUDENT' ? { profile, registrations: first, applications: second } : { profile, summary: first });
+    }).catch(failure => {
+      if (!active) return;
+      if (failure.status === 403) navigate('/unauthorized', { replace: true });
+      else setError(failure.message);
+    });
     return () => { active = false; };
-  }, [request, page.access, navigate]);
-  return <section className="container page-section"><PageHeading eyebrow={page.label} title={profile ? `Welcome, ${profile.fullName}.` : page.label}>{role === 'STUDENT' ? 'Discover campus events and manage your registrations using My events.' : role === 'SUPER_ADMIN' ? 'Manage campus clubs and administrator assignments using the links below.' : 'Manage profiles and events for your assigned clubs using the links below.'}</PageHeading>{error && <p className="form-error" role="alert">{error}</p>}{!profile && !error && <p role="status">Loading your profile…</p>}{profile && <dl className="profile-details"><div><dt>Email</dt><dd>{profile.email}</dd></div><div><dt>Registration number</dt><dd>{profile.registrationNumber}</dd></div><div><dt>Role</dt><dd>{profile.role}</dd></div></dl>}<div className="hero-actions">{role === 'STUDENT' && <Link className="button button-primary" to="/student/my-events">My events ↗</Link>}{role === 'SUPER_ADMIN' && <Link className="button button-primary" to="/super-admin/club-administrators">Manage club administrators ↗</Link>}{['CLUB_ADMIN', 'SUPER_ADMIN'].includes(role) && <Link className="button button-outline" to="/manage/clubs">Manage clubs ↗</Link>}<Link className="button button-primary" to="/events">Explore events ↗</Link><button className="button button-outline" onClick={logout}>Logout</button></div></section>;
+  }, [request, role, navigate, version]);
+  return <section className="container page-section"><PageHeading eyebrow={page.label} title={data ? `Welcome, ${data.profile.fullName}.` : page.label}>{role === 'STUDENT' ? 'Your registrations, organizing applications, and campus profile.' : role === 'SUPER_ADMIN' ? 'Platform statistics, clubs, and administrator assignments.' : 'Events, participants, and organizing applications for your assigned clubs.'}</PageHeading>{error && <p className="form-error" role="alert">{error} <button className="text-link" onClick={() => setVersion(value => value + 1)}>Try again</button></p>}{!data && !error && <p role="status">Loading your dashboard…</p>}{message && <p className="form-success" role="status">{message}</p>}{data && <><div className="dashboard-toolbar"><button className="text-link" onClick={() => { setMessage(''); setVersion(value => value + 1); }}>Refresh dashboard</button><button className="text-link" onClick={logout}>Logout</button></div><section className="dashboard-section"><h2>Your profile</h2><dl className="profile-details"><div><dt>Email</dt><dd>{data.profile.email}</dd></div><div><dt>Registration number</dt><dd>{data.profile.registrationNumber}</dd></div><div><dt>Role</dt><dd>{data.profile.role}</dd></div></dl></section>{role === 'STUDENT' ? <StudentPanel registrations={data.registrations} applications={data.applications} onCancelled={updated => { setData(current => ({ ...current, registrations: current.registrations.map(row => row.id === updated.id ? updated : row) })); setMessage('Registration cancelled.'); }} /> : <AdministratorPanel summary={data.summary} platform={role === 'SUPER_ADMIN'} />}</>}</section>;
 }

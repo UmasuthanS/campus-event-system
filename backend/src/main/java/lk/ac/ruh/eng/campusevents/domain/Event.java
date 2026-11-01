@@ -19,6 +19,16 @@ public class Event extends AuditedDocument {
     private String category;
     private Instant registrationDeadline;
     private long revision;
+    private Integer organizerCapacity = 0;
+    private Instant organizingApplicationDeadline;
+    private java.util.List<OrganizerApplication> organizerApplications = new java.util.ArrayList<>();
+    public Integer getOrganizerCapacity() { return organizerCapacity == null ? 0 : organizerCapacity; }
+    public void setOrganizerCapacity(Integer value) { organizerCapacity = value; }
+    public Instant getOrganizingApplicationDeadline() { return organizingApplicationDeadline; }
+    public void setOrganizingApplicationDeadline(Instant value) { organizingApplicationDeadline = value; }
+    public java.util.List<OrganizerApplication> getOrganizerApplications() { return organizerApplications == null ? java.util.List.of() : organizerApplications; }
+    public void setOrganizerApplications(java.util.List<OrganizerApplication> value) { organizerApplications = value; }
+    public long getApprovedOrganizers() { return getOrganizerApplications().stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED).count(); }
     private java.util.List<Reservation> reservations = new java.util.ArrayList<>();
 
     public record Reservation(ObjectId token, ObjectId studentId, Instant createdAt, long sequence) { }

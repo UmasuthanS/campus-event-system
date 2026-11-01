@@ -1,5 +1,5 @@
 package lk.ac.ruh.eng.campusevents.domain;
 
 public enum ApplicationStatus {
-    PENDING, APPROVED, REJECTED
+    PENDING, APPROVED, REJECTED, WITHDRAWN
 }

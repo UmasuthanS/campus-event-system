@@ -83,6 +83,8 @@ public class EventService {
         event.setTitle(request.title()); event.setDescription(request.description()); event.setCategory(request.category());
         event.setVenue(request.venue()); event.setStartsAt(request.startAt()); event.setEndsAt(request.endAt());
         event.setCapacity(request.capacity()); event.setRegistrationDeadline(request.registrationDeadline());
+        event.setOrganizerCapacity(request.organizerCapacity() == null ? 0 : request.organizerCapacity());
+        event.setOrganizingApplicationDeadline(request.organizingApplicationDeadline());
         validate(event, true);
         indexes.ensure();
         return EventResponse.from(events.insert(event), true);
@@ -101,10 +103,12 @@ public class EventService {
         if (request.endAt() != null) event.setEndsAt(request.endAt());
         if (request.capacity() != null) event.setCapacity(request.capacity());
         if (request.registrationDeadline() != null) event.setRegistrationDeadline(request.registrationDeadline());
+        if (request.organizerCapacity() != null) event.setOrganizerCapacity(request.organizerCapacity());
+        if (request.organizingApplicationDeadline() != null) event.setOrganizingApplicationDeadline(request.organizingApplicationDeadline());
         validate(event, false);
         return write(event, new Update().set("title", event.getTitle()).set("description", event.getDescription())
                 .set("category", event.getCategory()).set("venue", event.getVenue()).set("startsAt", event.getStartsAt())
-                .set("endsAt", event.getEndsAt()).set("capacity", event.getCapacity()).set("registrationDeadline", event.getRegistrationDeadline()));
+                .set("endsAt", event.getEndsAt()).set("capacity", event.getCapacity()).set("registrationDeadline", event.getRegistrationDeadline()).set("organizerCapacity", event.getOrganizerCapacity()).set("organizingApplicationDeadline", event.getOrganizingApplicationDeadline()));
     }
     @PreAuthorize("@eventAuthorization.canManage(authentication, #id)")
     public EventResponse status(String id, EventStatus status) {
@@ -133,6 +137,11 @@ public class EventService {
         if (event.getDescription() == null || event.getDescription().isBlank()) throw bad("description", "Description is required.");
         if (event.getCategory() == null || event.getCategory().isBlank()) throw bad("category", "Category is required.");
         if (event.getVenue() == null || event.getVenue().isBlank()) throw bad("venue", "Venue is required.");
+        if (event.getOrganizerCapacity() < event.getApprovedOrganizers() || event.getOrganizerCapacity() > 1000 || event.getOrganizerCapacity() < 0) throw bad("organizerCapacity", "Organizer capacity must be 0–1000 and cannot be below the approved team size.");
+        if (event.getOrganizerCapacity() > 0 && (event.getOrganizingApplicationDeadline() == null || event.getStartsAt() == null
+                || event.getOrganizingApplicationDeadline().isAfter(event.getStartsAt()) || opening && !event.getOrganizingApplicationDeadline().isAfter(Instant.now()))) {
+            throw bad("organizingApplicationDeadline", "An enabled team requires a deadline no later than the start, and in the future when creating or publishing.");
+        }
         Instant now = Instant.now();
         if (event.getStartsAt() == null || !event.getStartsAt().isAfter(now)) throw bad("startAt", "Start time must be in the future.");
         if (event.getEndsAt() == null || !event.getEndsAt().isAfter(event.getStartsAt())) throw bad("endAt", "End time must be after the start.");

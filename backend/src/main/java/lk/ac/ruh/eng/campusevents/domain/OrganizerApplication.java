@@ -10,6 +10,20 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @CompoundIndex(name = "application_club_status", def = "{'clubId': 1, 'status': 1}")
 public class OrganizerApplication extends AuditedDocument {
     private ObjectId userId;
+    private ObjectId studentId;
+    private ObjectId eventId;
+    private String preferredRole;
+    private String experience;
+    private long sequence;
+    public ObjectId getStudentId() { return studentId == null ? userId : studentId; }
+    public ObjectId getEventId() { return eventId; }
+    public void setEventId(ObjectId value) { eventId = value; }
+    public String getPreferredRole() { return preferredRole; }
+    public void setPreferredRole(String value) { preferredRole = value; }
+    public String getExperience() { return experience; }
+    public void setExperience(String value) { experience = value; }
+    public long getSequence() { return sequence; }
+    public void setSequence(long value) { sequence = value; }
     private ObjectId clubId;
     private String motivation;
     private ApplicationStatus status = ApplicationStatus.PENDING;
@@ -17,7 +31,7 @@ public class OrganizerApplication extends AuditedDocument {
     private Instant reviewedAt;
 
     public ObjectId getUserId() { return userId; }
-    public void setUserId(ObjectId userId) { this.userId = userId; }
+    public void setUserId(ObjectId userId) { this.userId = userId; this.studentId = userId; }
 
     public ObjectId getClubId() { return clubId; }
     public void setClubId(ObjectId clubId) { this.clubId = clubId; }

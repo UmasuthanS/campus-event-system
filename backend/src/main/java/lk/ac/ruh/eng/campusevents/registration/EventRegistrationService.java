@@ -58,6 +58,8 @@ public class EventRegistrationService {
         for (int attempt = 0; attempt < 32; attempt++) {
             Event event = event(eventId);
             if (event.getReservations().stream().anyMatch(entry -> entry.studentId().equals(student))) throw conflict("ALREADY_REGISTERED", "You are already registered for this event.");
+            if (event.getOrganizerApplications().stream().anyMatch(a -> a.getStudentId().equals(student)
+                    && (a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.APPROVED))) throw conflict("ORGANIZER_CONFLICT", "Withdraw your active organizer application before registering as a participant.");
             if (!open(event)) throw conflict("REGISTRATION_CLOSED", "Registration is closed for this event.");
             if (event.getCapacity() == null || event.getReservedSeats() >= event.getCapacity()) throw conflict("EVENT_FULL", "This event has no remaining seats.");
             Instant now = Instant.now();
