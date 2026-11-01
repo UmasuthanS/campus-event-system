@@ -8,3 +8,5 @@ target/
 .idea/
 .vscode/
 *.log
+
+/backend/config/local.properties

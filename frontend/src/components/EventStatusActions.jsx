@@ -1,0 +1,3 @@
+export default function EventStatusActions({ event, onChange, busy, inactive = false }) {
+  return <div className="event-actions">{event.status === 'DRAFT' && <button className="button button-primary" disabled={busy || inactive} onClick={() => onChange('PUBLISHED')}>Publish</button>}{['DRAFT', 'PUBLISHED'].includes(event.status) && <button className="button button-outline" disabled={busy} onClick={() => onChange('CANCELLED')}>Cancel event</button>}{event.status === 'PUBLISHED' && new Date(event.endAt).getTime() <= Date.now() && <button className="button button-outline" disabled={busy} onClick={() => onChange('COMPLETED')}>Mark completed</button>}</div>;
+}

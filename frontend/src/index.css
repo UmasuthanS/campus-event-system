@@ -227,3 +227,80 @@ button:disabled, input:disabled { opacity: .65; cursor: wait; }
 .profile-details { display: grid; gap: 16px; padding: 25px; background: var(--paper); border-left: 3px solid var(--gold); max-width: 650px; }
 .profile-details dt { font-size: .72rem; color: var(--muted); margin-bottom: 5px; }
 .profile-details dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Club directory and management */
+.club-list, .management-list { margin-top: 30px; }
+.club-mark { display: flex; align-items: center; gap: 12px; overflow-wrap: anywhere; }
+.club-mark img { width: 38px; height: 38px; object-fit: contain; }
+.club-profile-logo { width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; }
+.club-description { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 780px; line-height: 1.9; color: var(--muted); }
+.management-row { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 25px; border-bottom: 1px solid var(--line); }
+.management-row h2 { font-size: 1.6rem; overflow-wrap: anywhere; }
+.management-row .text-link { flex-shrink: 0; }
+.club-editor-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 45px; align-items: start; }
+.club-editor-grid > * { min-width: 0; }
+.club-admin-panel { background: var(--paper); padding: 25px; border-top: 3px solid var(--gold); }
+.club-admin-panel h2 { font-size: 1.6rem; margin-bottom: 15px; }
+.club-admin-panel h2:not(:first-child) { margin-top: 35px; }
+.form-field textarea { width: 100%; padding: 13px; border: 1px solid #cdbfba; border-radius: 3px; font: inherit; font-size: .9rem; resize: vertical; background: white; }
+.form-field textarea[aria-invalid="true"] { border-color: var(--maroon); }
+fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+fieldset:disabled { opacity: .7; }
+.form-success { padding: 15px; margin-bottom: 20px; background: #edf6ef; color: #244f32; border-left: 3px solid #397249; }
+.assigned-admins { padding: 0; list-style: none; margin-top: 25px; }
+.assigned-admins li { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-block: 15px; border-top: 1px solid var(--line); font-size: .8rem; }
+.assigned-admins span { display: block; color: var(--muted); margin-top: 5px; overflow-wrap: anywhere; }
+.club-card h3 { overflow-wrap: anywhere; }
+@media (max-width: 800px) { .club-editor-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .management-row { align-items: start; flex-direction: column; padding-inline: 0; } }
+
+/* Event management */
+.event-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.event-editor { max-width: 760px; }
+.event-editor select { width: 100%; padding: 12px; border: 1px solid #cdbfba; background: white; border-radius: 3px; font: inherit; }
+.event-toolbar { margin-top: 30px; }
+.event-management-row > * { min-width: 0; }
+.event-management-row .button { padding: 10px 16px; }
+
+.admin-assignment-grid { align-items: start; }
+.admin-assignment-grid > article { min-width: 0; }
+.admin-assignment-grid h2 { overflow-wrap: anywhere; }
+.admin-assignment-grid .assigned-admins li > div { min-width: 0; overflow-wrap: anywhere; }
+.club-admin-panel > section { margin-top: 26px; }
+
+/* Public discovery and FullCalendar */
+.discovery-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; margin-block: 28px; padding: 22px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; }
+.discovery-filters .form-field { flex: 1 1 145px; min-width: 0; margin: 0; }
+.discovery-filters .form-field:first-child { flex-basis: 220px; }
+.discovery-filters select { width: 100%; padding: 12px; border: 1px solid #cdbfba; border-radius: 3px; background: white; font: inherit; font-size: .85rem; }
+.discovery-filters > button { padding-block: 13px; }
+.calendar-legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: .78rem; margin-block: 22px; }
+.calendar-legend span { display: inline-flex; gap: 8px; align-items: center; }
+.calendar-legend i { width: 12px; height: 12px; border-radius: 50%; }
+.campus-calendar { margin-top: 22px; --fc-button-bg-color: #6B0F14; --fc-button-border-color: #6B0F14; --fc-button-hover-bg-color: #4c090d; --fc-button-hover-border-color: #4c090d; --fc-button-active-bg-color: #4c090d; --fc-button-active-border-color: #4c090d; --fc-today-bg-color: #f7be191c; --fc-border-color: #e9e2dd; --fc-list-event-hover-bg-color: #faf8f5; }
+.campus-calendar .fc { font-size: .82rem; }
+.campus-calendar .fc-toolbar-title { font-family: Georgia, serif; color: var(--maroon); font-size: 1.8rem; }
+.campus-calendar .fc-button { padding: 9px 12px; text-transform: capitalize; }
+.campus-calendar .fc-event { cursor: pointer; }
+.campus-calendar .fc-list-event-title a { color: var(--ink); }
+.campus-calendar .fc-daygrid-event .fc-event-title { white-space: normal; overflow-wrap: anywhere; }
+.campus-calendar .fc-timegrid-event .fc-event-main { overflow: hidden; }
+.event-detail-panel { border-top: 4px solid; padding-block: 25px; }
+.event-detail-panel .profile-details { margin-block: 25px; }
+.event-card .card-description { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-feature h2 { overflow-wrap: anywhere; }
+@media (max-width: 800px) { .campus-calendar .fc-toolbar { flex-wrap: wrap; gap: 15px; } }
+@media (max-width: 560px) {
+  .discovery-filters { padding: 16px; }
+  .discovery-filters .form-field { flex-basis: 100%; }
+  .campus-calendar .fc-toolbar { flex-direction: column; align-items: stretch; }
+  .campus-calendar .fc-toolbar-chunk { display: flex; justify-content: center; }
+  .campus-calendar .fc-toolbar-title { font-size: 1.5rem; }
+  .campus-calendar .fc-button { padding: 9px; }
+  .campus-calendar .fc-list-event-time { white-space: normal; }
+  .campus-calendar .fc { font-size: .7rem; }
+}
+
+.campus-calendar .fc-daygrid-event .fc-event-main-frame { display: block; padding: 3px 4px; }
+.campus-calendar .fc-daygrid-event .fc-event-time { display: block; white-space: normal; font-size: .65rem; }
+.campus-calendar .fc-daygrid-event .fc-event-title { text-align: left; font-weight: 600; }

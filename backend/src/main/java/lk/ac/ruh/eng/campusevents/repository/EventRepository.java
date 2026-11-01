@@ -8,6 +8,8 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface EventRepository extends MongoRepository<Event, ObjectId> {
+    List<Event> findByStatusAndClubIdInOrderByStartsAtAsc(EventStatus status, java.util.Collection<ObjectId> clubIds);
+    List<Event> findByClubIdAndStatusOrderByStartsAtAsc(ObjectId clubId, EventStatus status);
     List<Event> findByStatusOrderByStartsAtAsc(EventStatus status);
     List<Event> findByClubIdOrderByStartsAtAsc(ObjectId clubId);
     List<Event> findByStartsAtBetweenOrderByStartsAtAsc(Instant from, Instant to);

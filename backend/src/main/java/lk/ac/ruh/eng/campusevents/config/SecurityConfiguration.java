@@ -55,7 +55,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.GET, "/api/v1/health", "/api/v1/health/database").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/clubs").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/*", "/api/v1/clubs", "/api/v1/clubs/*", "/api/v1/clubs/*/events").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/clubs/*/events").hasAnyRole("CLUB_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/events/*", "/api/v1/events/*/status").hasAnyRole("CLUB_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").hasAnyRole("STUDENT", "CLUB_ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/v1/club-admin/**").hasAnyRole("CLUB_ADMIN", "SUPER_ADMIN")

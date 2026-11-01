@@ -12,6 +12,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/list": "^6.1.20",
+    "@fullcalendar/luxon3": "^6.1.20",
+    "@fullcalendar/react": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "luxon": "^3.7.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router": "^8.5.1"

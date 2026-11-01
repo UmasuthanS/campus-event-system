@@ -8,7 +8,7 @@ export default function Footer() {
         <nav aria-label="Footer navigation"><p className="eyebrow">Explore campus</p><Link to="/events">Events</Link><Link to="/calendar">Calendar</Link><Link to="/clubs">Student clubs</Link></nav>
         <nav aria-label="Account navigation"><p className="eyebrow">Stay connected</p><Link to="/login">Login</Link><Link to="/register">Register</Link><Link to="/">Back to home ↗</Link></nav>
       </div>
-      <div className="container footer-bottom"><span>© {new Date().getFullYear()} Campus Connect</span><span>Frontend preview · All event listings are temporary demo data.</span></div>
+      <div className="container footer-bottom"><span>© {new Date().getFullYear()} Campus Connect</span><span>Event times are shown in Asia/Colombo.</span></div>
     </footer>
   );
 }

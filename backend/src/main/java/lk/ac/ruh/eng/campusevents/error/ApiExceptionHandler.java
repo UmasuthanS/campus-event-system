@@ -14,14 +14,14 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ApiError> api(ApiException exception) {
         return ResponseEntity.status(exception.getStatus()).body(new ApiError(
-                exception.getStatus().value(), exception.getCode(), exception.getMessage()));
+                exception.getStatus().value(), exception.getCode(), exception.getMessage(), exception.getErrors()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception) {
         var errors = new LinkedHashMap<String, String>();
         exception.getBindingResult().getFieldErrors().forEach(error -> errors.putIfAbsent(
-                error.getField().equals("passwordWithinLimit") ? "password" : error.getField(), error.getDefaultMessage()));
+                error.getField().equals("passwordWithinLimit") ? "password" : error.getField().equals("logoUrlValid") ? "logoUrl" : error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(new ApiError(400, "VALIDATION_ERROR", "Check the highlighted fields.", errors));
     }
 
