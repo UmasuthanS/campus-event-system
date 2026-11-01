@@ -3,7 +3,6 @@ package lk.ac.ruh.eng.campusevents.discovery;
 import java.time.Instant;
 import java.util.List;
 import lk.ac.ruh.eng.campusevents.domain.EventStatus;
-import lk.ac.ruh.eng.campusevents.repository.ClubRepository;
 import lk.ac.ruh.eng.campusevents.repository.EventRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,18 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 public class DiscoveryController {
-    private final ClubRepository clubs;
     private final EventRepository events;
 
-    public DiscoveryController(ClubRepository clubs, EventRepository events) {
-        this.clubs = clubs;
+    public DiscoveryController(EventRepository events) {
         this.events = events;
-    }
-
-    @GetMapping("/clubs")
-    public List<ClubSummary> clubs() {
-        return clubs.findAll().stream().map(club -> new ClubSummary(club.getId().toHexString(),
-                club.getCode(), club.getName(), club.getDescription())).toList();
     }
 
     @GetMapping("/events")
@@ -33,6 +24,5 @@ public class DiscoveryController {
                 event.getTitle(), event.getDescription(), event.getVenue(), event.getStartsAt(), event.getEndsAt())).toList();
     }
 
-    public record ClubSummary(String id, String code, String name, String description) { }
     public record EventSummary(String id, String clubId, String title, String description, String venue, Instant startsAt, Instant endsAt) { }
 }

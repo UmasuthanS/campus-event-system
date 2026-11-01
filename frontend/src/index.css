@@ -227,3 +227,29 @@ button:disabled, input:disabled { opacity: .65; cursor: wait; }
 .profile-details { display: grid; gap: 16px; padding: 25px; background: var(--paper); border-left: 3px solid var(--gold); max-width: 650px; }
 .profile-details dt { font-size: .72rem; color: var(--muted); margin-bottom: 5px; }
 .profile-details dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Club directory and management */
+.club-list, .management-list { margin-top: 30px; }
+.club-mark { display: flex; align-items: center; gap: 12px; overflow-wrap: anywhere; }
+.club-mark img { width: 38px; height: 38px; object-fit: contain; }
+.club-profile-logo { width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; }
+.club-description { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 780px; line-height: 1.9; color: var(--muted); }
+.management-row { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 25px; border-bottom: 1px solid var(--line); }
+.management-row h2 { font-size: 1.6rem; overflow-wrap: anywhere; }
+.management-row .text-link { flex-shrink: 0; }
+.club-editor-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 45px; align-items: start; }
+.club-editor-grid > * { min-width: 0; }
+.club-admin-panel { background: var(--paper); padding: 25px; border-top: 3px solid var(--gold); }
+.club-admin-panel h2 { font-size: 1.6rem; margin-bottom: 15px; }
+.club-admin-panel h2:not(:first-child) { margin-top: 35px; }
+.form-field textarea { width: 100%; padding: 13px; border: 1px solid #cdbfba; border-radius: 3px; font: inherit; font-size: .9rem; resize: vertical; background: white; }
+.form-field textarea[aria-invalid="true"] { border-color: var(--maroon); }
+fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+fieldset:disabled { opacity: .7; }
+.form-success { padding: 15px; margin-bottom: 20px; background: #edf6ef; color: #244f32; border-left: 3px solid #397249; }
+.assigned-admins { padding: 0; list-style: none; margin-top: 25px; }
+.assigned-admins li { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-block: 15px; border-top: 1px solid var(--line); font-size: .8rem; }
+.assigned-admins span { display: block; color: var(--muted); margin-top: 5px; overflow-wrap: anywhere; }
+.club-card h3 { overflow-wrap: anywhere; }
+@media (max-width: 800px) { .club-editor-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .management-row { align-items: start; flex-direction: column; padding-inline: 0; } }

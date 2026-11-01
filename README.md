@@ -1,6 +1,6 @@
 # Campus Event Discovery & RSVP System
 
-Project setup, branded frontend, MongoDB domain models, and role-based authentication for the University of Ruhuna, Faculty of Engineering.
+Project setup, branded frontend, MongoDB domain models, role-based authentication, and club management for the University of Ruhuna, Faculty of Engineering.
 
 - `frontend/`: React, Vite, JavaScript, Tailwind CSS
 - `backend/`: Java 21, Spring Boot, Maven, Web, Security, Validation, Data MongoDB
@@ -51,8 +51,8 @@ optional for default-profile startup, liveness verification, and the default tes
 may log background connection failures when no database is running.
 Health endpoints and the registration/login POST endpoints are public.
 `GET /api/v1/users/me` requires a valid Bearer token. Public discovery GET endpoints
-return clubs and published events. Management CRUD and full dashboards are reserved
-for later stages.
+return clubs and published events. Club management is available to authorized admins; event management and full
+dashboards are reserved for later stages.
 
 ## Local MongoDB setup
 
@@ -123,7 +123,7 @@ with millisecond precision. Event and review timestamps also use `Instant`.
 | Collection | Model / indexes |
 | --- | --- |
 | `users` | User; unique registration number and email; roles STUDENT, CLUB_ADMIN, SUPER_ADMIN |
-| `clubs` | Club; unique code for idempotent seeding |
+| `clubs` | Club; unique normalized name/short-name indexes, legacy code, ACTIVE/INACTIVE status, and assigned admin IDs |
 | `events` | Event; start date and compound club/start-date indexes; DRAFT, PUBLISHED, CANCELLED, COMPLETED |
 | `event_registrations` | EventRegistration; unique event/user pair and user/creation-date lookup; CONFIRMED, CANCELLED |
 | `organizer_applications` | OrganizerApplication; user/club and club/status lookups; PENDING, APPROVED, REJECTED |
@@ -184,18 +184,17 @@ no authentication cookies are used. Use HTTPS for any non-local deployment.
 | `/api/v1/club-admin/**` | CLUB_ADMIN or SUPER_ADMIN |
 | `/api/v1/super-admin/**` | SUPER_ADMIN only |
 
-Each protected area exposes only `GET .../access` for verifying permissions at this
-stage. `GET /api/v1/club-admin/clubs/{clubId}/access` additionally checks ownership.
+Each protected area exposes `GET .../access` for verifying permissions. `GET /api/v1/club-admin/clubs/{clubId}/access` additionally checks ownership.
 Club Admins must appear in that club's `adminIds` (BSON ObjectIds); Super Admins
 can access any existing club. Upcoming club management methods must reuse
 `@PreAuthorize("@clubAuthorization.canManage(authentication, #clubId)")` in addition
-to the protected URL rules. There are no public role changes, admin registration,
-club ownership changes, or management CRUD endpoints. Unauthenticated protected
+to the protected URL rules. There are no public role changes or admin registration. Club admin assignments
+are restricted to Super Admins. Unauthenticated protected
 requests return 401; insufficient permissions return 403. Database failures fail
 closed with 503. Deleting an account invalidates its tokens.
 
-Frontend event/club pages retain their clearly labeled demo listings; connecting
-them to discovery data is outside this stage.
+The club listing and profiles use real API data. Event pages and the homepage
+club previews retain their labeled demo data.
 
 ### Development-only Super Admin bootstrap
 
@@ -218,8 +217,48 @@ promoted or overwritten. It is safe to rerun with the same identity.
 
 After the first successful startup, set `BOOTSTRAP_SUPER_ADMIN=false` and remove
 the bootstrap credentials from the environment. The process is disabled by default
-and unavailable outside `dev`, even when its flag is enabled. Club Admin assignment
-and club ownership provisioning belong to the later approval/management stages.
+and unavailable outside `dev`, even when its flag is enabled. Super Admins can assign existing accounts to clubs through the club management UI.
+
+## Club management
+
+Start with the `dev` profile and `SEED_CLUBS=true` (the `.env.example` defaults) to
+initialize IEEE, ComES, and AIESEC. Seeding inserts only missing identities and
+preserves edited profiles, assignments, timestamps, and inactive status. Legacy
+`code` fields remain compatible; missing short names and canonical name keys are
+backfilled without replacing profile values. Duplicate legacy names must be resolved
+before enabling unique indexes; no records are automatically removed.
+
+Visit `/clubs` for active clubs and `/clubs/:id` for public profiles. Admins can use
+“Manage clubs” at `/manage/clubs`; Super Admins can create clubs, change status,
+and assign/revoke admins by existing account email. Club Admins see only their
+assigned clubs and may edit active profiles. No event management or new dashboards
+are included.
+
+| Endpoint | Permission |
+| --- | --- |
+| `GET /api/v1/clubs`, `GET /api/v1/clubs/{id}` | Public; active clubs only |
+| `GET /api/v1/club-admin/clubs` | Super Admin: all clubs; Club Admin: assigned clubs |
+| `GET /api/v1/club-admin/clubs/{id}` | Super Admin or assigned Club Admin, including inactive records |
+| `POST /api/v1/super-admin/clubs` | Super Admin; creates an ACTIVE club |
+| `PUT /api/v1/club-admin/clubs/{id}` | Super Admin or assigned Club Admin; Club Admin edits require ACTIVE status |
+| `PATCH /api/v1/super-admin/clubs/{id}/status` | Super Admin; `{ "status": "ACTIVE" }` or `INACTIVE` |
+| `DELETE /api/v1/super-admin/clubs/{id}` | Super Admin; soft deactivation only |
+| `PUT /api/v1/super-admin/clubs/{id}/admins` | Super Admin; `{ "email": "existing-account@example.test" }` |
+| `DELETE /api/v1/super-admin/clubs/{id}/admins/{userId}` | Super Admin; revoke that club assignment |
+
+Profile writes accept `name`, `shortName`, `description`, `logoUrl`, and
+`contactEmail`. Name, short name, and description are required. Logo URLs must be
+absolute HTTP(S) URLs without embedded credentials; email/logo fields can be empty.
+Names and short names are unique across active and inactive clubs, ignoring case
+and repeated whitespace. Collisions return 409. Status and admin IDs cannot be
+injected through profile requests. Service-level authorization and atomic edit
+conditions enforce ownership independently of the frontend.
+
+Assignment promotes STUDENT accounts to CLUB_ADMIN. They must log in again to use
+new privileges. Revoke removes access to that club immediately while retaining
+other assignments and the account's CLUB_ADMIN role; no automatic global role
+changes occur on revocation. Inactive clubs remain in MongoDB and their public
+profiles return 404 until reactivated.
 
 ## Verify builds
 
@@ -241,9 +280,10 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/?serverSelectionTimeoutMS=2000&conne
 ```
 
 Live tests create and drop their own uniquely named `campus_stage3_test_*` and
-`campus_auth_test_*` and `campus_rbac_test_*` databases.
+`campus_auth_test_*`, `campus_rbac_test_*`, and `campus_club_test_*` databases.
 Use a local test server with permission to create/drop databases. They verify
 connectivity, all five repositories, ObjectId references, UTC auditing, indexes,
 duplicate rejection, idempotent club seeding, registration, BCrypt hashing, login,
-role/ownership restrictions, bootstrap safeguards, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
+role/ownership restrictions, bootstrap safeguards, club uniqueness, assignments,
+soft deletion, validation, and token expiry. JWT unit tests also run without MongoDB. Build output is
 written to `frontend/dist/` and `backend/target/` (ignored by Git).
