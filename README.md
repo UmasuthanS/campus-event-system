@@ -24,10 +24,19 @@ From the repository root, start the backend:
 
 ```sh
 cd backend
-# Generate a local signing key once per shell; use your saved .env key for repeat starts.
-export JWT_SECRET="$(openssl rand -base64 32)"
+# One-time setup: persist a key without overwriting it on later starts.
+mkdir -p config
+if [ ! -f config/local.properties ]; then
+  (umask 077; printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 32)" > config/local.properties)
+fi
 ./mvnw spring-boot:run
 ```
+
+Subsequent starts require only `cd backend` and `./mvnw spring-boot:run` with
+JDK 21 configured. Spring Boot automatically imports the Git-ignored
+`backend/config/local.properties`. Use Java properties syntax (`JWT_SECRET=value`,
+without quotes or `export`). An empty template value must be replaced before starting.
+The Maven goal is `spring-boot:run`, including `:run`.
 
 In another terminal, start the frontend:
 
@@ -73,7 +82,7 @@ From the repository root:
 ```sh
 cd backend
 cp .env.example .env
-# Edit .env for your database and set JWT_SECRET using openssl rand -base64 32.
+# Edit .env for your database; the JWT key remains in config/local.properties.
 # Then export its values:
 set -a
 . ./.env
@@ -135,7 +144,10 @@ the existing record. `passwordHash` is excluded from JSON serialization. Event m
 
 Set `JWT_SECRET` to at least 32 cryptographically random bytes encoded as Base64
 (`openssl rand -base64 32`). Empty, malformed, or weak keys stop startup. Keep the
-key in the ignored backend `.env` or your shell. `JWT_TTL_SECONDS` defaults to 900
+key in the ignored `backend/config/local.properties` as shown above, or export it
+in your shell. A shell `JWT_SECRET` overrides the file, including an empty value;
+unset stale/empty exports to use the persistent key. Do not regenerate the key on
+each launch. No secret or insecure fallback is included in Git. `JWT_TTL_SECONDS` defaults to 900
 and accepts 60–900 seconds; `JWT_ISSUER` defaults to `campus-event-system`.
 Tests generate their own ephemeral signing key and do not need `JWT_SECRET`.
 

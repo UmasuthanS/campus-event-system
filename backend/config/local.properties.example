@@ -1,0 +1,4 @@
+# Copy to local.properties (Git ignored) and fill in a generated value.
+# Generate once with: openssl rand -base64 32
+# Use plain Java properties syntax: no quotes and no export prefix.
+JWT_SECRET=
